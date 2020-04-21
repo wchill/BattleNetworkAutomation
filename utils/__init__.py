@@ -1,0 +1,1 @@
+from .crc8_wrapper import Crc8WrappedFileLikeObject

@@ -1,0 +1,8 @@
+imutils
+numpy
+opencv-contrib-python
+opencv-python
+Pillow
+pytesseract
+pyserial
+functionfs
