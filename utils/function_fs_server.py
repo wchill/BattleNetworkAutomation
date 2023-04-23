@@ -11,8 +11,9 @@ import inspect
 
 from functionfs.gadget import GadgetSubprocessManager, ConfigFunctionFFSSubprocess
 
-from utils.raw_inputs import EMPTY_REPORT
+from utils.raw_inputs import EMPTY_REPORT, RawButton, RawDPad, RawLeftStick, RawRightStick, _RawDPad
 from utils.structs import FuncFsServerRequest, FuncFsServerResponse
+from utils import Gamepad
 
 """
 0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
@@ -169,6 +170,15 @@ class UsbHidDevice(functionfs.HIDFunction):
             high_speed_interval=high_speed_interval
         )
         self.next_report = bytearray(EMPTY_REPORT)
+
+        self._joystick_lock = threading.RLock()
+        self._user_override_cv = threading.Condition()
+        self.using_gamepad = False
+        self.gamepad_state = RawButton.Nothing + RawDPad.Center + RawLeftStick.Center + RawRightStick.Center
+        self.dpad_state = [0, 0]
+        self.joystick_thread = threading.Thread(target=self.handle_joystick, args=(), daemon=True)
+        self.joystick_thread.start()
+
         self.server_thread = threading.Thread(target=self.listen_on_socket, args=(), daemon=True)
         self.server_thread.start()
         self.enabled = False
@@ -195,6 +205,79 @@ class UsbHidDevice(functionfs.HIDFunction):
         else:
             return request, 0
 
+    def handle_joystick(self):
+        if not Gamepad.available():
+            print('Gamepad not connected, waiting for gamepad connection')
+            while not Gamepad.available():
+                time.sleep(1)
+        gamepad = Gamepad.EightBitDoController()
+        print('Gamepad connected')
+        print(f'Button names: {gamepad.buttonNames}')
+        print(f'Axis names: {gamepad.axisNames}')
+
+        gamepad.startBackgroundUpdates()
+        for button in gamepad.buttonNames:
+            gamepad.addButtonChangedHandler(button, lambda is_pressed, button=button: self.handle_button_changed(gamepad.buttonNames[button], is_pressed))
+        for axis in gamepad.axisNames:
+            gamepad.addAxisMovedHandler(axis, lambda position, axis=axis: self.handle_axis_changed(gamepad.axisNames[axis], position))
+
+    def handle_button_changed(self, button: str, is_pressed: bool):
+        if button == "Home" and not is_pressed:
+            with self._joystick_lock:
+                self.using_gamepad = not self.using_gamepad
+                print(f"Using gamepad: {self.using_gamepad}")
+                if not self.using_gamepad:
+                    with self._user_override_cv:
+                        self._user_override_cv.notify()
+        else:
+            if is_pressed:
+                self.gamepad_state |= RawButton[button]
+            else:
+                self.gamepad_state &= ~RawButton[button]
+
+            with self._joystick_lock:
+                if self.using_gamepad:
+                    report = self.gamepad_state.to_bytes(8, byteorder='little')
+                    self.update_report(report)
+
+    def handle_axis_changed(self, axis: str, position: float):
+        if axis == "L2" or axis == "R2":
+            if position < 0:
+                self.gamepad_state &= ~RawButton[axis]
+            else:
+                self.gamepad_state |= RawButton[axis]
+        elif axis.startswith("DPAD"):
+            index = 0 if axis.endswith("X") else 1
+            self.dpad_state[index] = int(position)
+            dpad_tuple = self.dpad_state[0], self.dpad_state[1]
+            lookup_table = {
+                (-1, -1): RawDPad.UpLeft,
+                (-1, 0): RawDPad.Left,
+                (-1, 1): RawDPad.DownLeft,
+                (0, -1): RawDPad.Up,
+                (0, 0): RawDPad.Center,
+                (0, 1): RawDPad.Down,
+                (1, -1): RawDPad.UpRight,
+                (1, 0): RawDPad.Right,
+                (1, 1): RawDPad.DownRight
+            }
+            self.gamepad_state &= ~(0xFF << _RawDPad.SHIFT_BITS)
+            self.gamepad_state |= lookup_table[dpad_tuple]
+        else:
+            stick = RawLeftStick if axis.startswith("LEFT") else RawRightStick
+            shift_bits = stick.SHIFT_BITS
+            if axis.endswith("Y"):
+                shift_bits += 8
+
+            int_pos = min(max(int(position * 256 + 128.5), 0), 255)
+            self.gamepad_state &= ~(0xFF << shift_bits)
+            self.gamepad_state |= (int_pos << shift_bits)
+
+        with self._joystick_lock:
+            if self.using_gamepad:
+                report = self.gamepad_state.to_bytes(8, byteorder='little')
+                self.update_report(report)
+
     def listen_on_socket(self):
         sock = socket.socket()
         sock.bind(('0.0.0.0', 3000))
@@ -203,37 +286,52 @@ class UsbHidDevice(functionfs.HIDFunction):
         should_stop = False
         try:
             while not should_stop:
-                conn, addr = sock.accept()
-                print(f"Accepting socket connection from {addr}: {conn}")
-                while not self.enabled:
-                    time.sleep(0.1)
-                print(f"USB host enabled endpoint, unblocking client")
-                self.send_response(conn, FuncFsServerResponse.HOST_ENABLED)
+                try:
+                    conn, addr = sock.accept()
+                    print(f"Accepting socket connection from {addr}: {conn}")
+                    while not self.enabled:
+                        time.sleep(0.1)
+                    print(f"USB host enabled endpoint, unblocking client")
+                    self.send_response(conn, FuncFsServerResponse.HOST_ENABLED)
 
-                while True:
-                    command = conn.recv(1)
-                    if not command:
-                        conn.close()
-                        break
-
-                    request, num_bytes_needed = self.interpret_command(command)
-
-                    bytes_recv = 0
-                    msg = b''
-                    while bytes_recv < num_bytes_needed:
-                        msg += conn.recv(8 - bytes_recv)
-                        bytes_recv = len(msg)
-                        if not msg:
+                    while True:
+                        command = conn.recv(1)
+                        if not command:
                             conn.close()
+                            break
 
-                    if request == FuncFsServerRequest.UPDATE_REPORT:
-                        self.update_report(msg)
-                        self.send_response(conn, FuncFsServerResponse.ACK)
-                    elif request == FuncFsServerRequest.STOP:
-                        print(f"Stop requested")
-                        should_stop = True
-                        signal.raise_signal(signal.SIGINT)
-                        break
+                        request, num_bytes_needed = self.interpret_command(command)
+
+                        bytes_recv = 0
+                        msg = b''
+                        while bytes_recv < num_bytes_needed:
+                            msg += conn.recv(8 - bytes_recv)
+                            bytes_recv = len(msg)
+                            if not msg:
+                                conn.close()
+
+                        if request == FuncFsServerRequest.UPDATE_REPORT:
+                            self._joystick_lock.acquire()
+                            if self.using_gamepad:
+                                self._joystick_lock.release()
+                                print("Blocking client since user requested direct controller input")
+                                self.send_response(conn, FuncFsServerResponse.USER_OVERRIDE)
+                                with self._user_override_cv:
+                                    while self.using_gamepad:
+                                        self._user_override_cv.wait()
+                                print("Unblocking client since user disabled direct controller input")
+                                self.send_response(conn, FuncFsServerResponse.HOST_ENABLED)
+                            else:
+                                self.update_report(msg)
+                                self._joystick_lock.release()
+                                self.send_response(conn, FuncFsServerResponse.ACK)
+                        elif request == FuncFsServerRequest.STOP:
+                            print(f"Stop requested")
+                            should_stop = True
+                            signal.raise_signal(signal.SIGINT)
+                            break
+                except ConnectionResetError:
+                    pass
         finally:
             sock.close()
 
@@ -424,8 +522,3 @@ def get_config_function_subprocess(**kwargs):
         getFunction=UsbHidDevice,
         **kwargs
     )
-
-
-if __name__ == "__main__":
-    with subprocess_manager() as gadget:
-        gadget.waitForever()

@@ -18,15 +18,15 @@
 1. Set up your Pi and enable networking, either Ethernet or Wi-Fi. Ethernet is preferable but either is fine.
 2. Install `git`, `libaio1`, and `python3-pip`
     * `sudo apt update && sudo apt install -y git libaio1 python3-pip`
-3. Set up a virtualenv and install dependencies
-    * `python -m virtualenv venv`
-    * `source venv/bin/activate`
-    * `pip install -r requirements.txt`
-4. As root, edit `/boot/config.txt` to add the line `dtoverlay=dwc2` to the bottom
+3. As root, edit `/boot/config.txt` to add the line `dtoverlay=dwc2` to the bottom
     * `sudo bash -c "echo "dtoverlay=dwc2" >> /boot/overlay.txt`
-5. As root, edit `/etc/rc.local` to add the line `python $PROJECT_ROOT/function_fs_startup.sh` to the bottom _before_ 
+4. As root, edit `/etc/rc.local` to add the line `python $PROJECT_ROOT/function_fs_startup.sh` to the bottom _before_ 
    the line `exit 0`
     * Replace `$PROJECT_ROOT` with the correct folder path
+5. As root, install python dependencies
+    * `sudo -i`
+    * `cd $PROJECT_ROOT`
+    * `pip install -r requirements.txt`
 6. Connect your Switch to your capture card
 7. Go to Graveyard1 and set up your NCP/patch cards/folder according to this guide:
    https://www.reddit.com/r/BattleNetwork/comments/12tt38l/psa_the_fastest_bugfrag_farming_method_in_battle/
@@ -44,3 +44,7 @@ exist, such as controlling an emulated controller via serial port or using confi
 
 The capture card lets us use OpenCV in order to capture image data from the Switch. Then, we perform some fuzzy image
 matching to determine what state the game is in and use that knowledge to drive the state machine.
+
+## Notes
+* Connecting an 8BitDo controller in XInput mode will allow you to directly control the Switch. Press HOME to
+  enable/disable this functionality. The script will automatically pause while you have direct control.

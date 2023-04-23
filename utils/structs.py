@@ -10,8 +10,10 @@ class FuncFsServerRequest(IntEnum):
 
 
 class FuncFsServerResponse(IntEnum):
-    HOST_ENABLED = 0x00
-    ACK = 0x01
+    HOST_ENABLED  = 0x00
+    ACK           = 0x01
+    NACK          = 0x02
+    USER_OVERRIDE = 0x03
     UNKNOWN_ERROR = 0xFF
 
     def serialize(self):

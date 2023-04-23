@@ -1,5 +1,6 @@
 import ipaddress
 import socket
+import time
 
 from . import ControllerSink
 from utils.structs import FuncFsServerRequest, FuncFsServerResponse
@@ -51,6 +52,15 @@ class SocketWrapper:
             msg = FuncFsServerResponse.from_bytes(self.sock.recv(1), byteorder='little')
             if msg is None:
                 raise RuntimeError("Socket closed unexpectedly")
+            elif msg == FuncFsServerResponse.USER_OVERRIDE:
+                print("User override, waiting for server to unblock")
+                while True:
+                    msg = FuncFsServerResponse.from_bytes(self.sock.recv(1), byteorder='little')
+                    if msg == FuncFsServerResponse.HOST_ENABLED:
+                        print("Unblocked")
+                        return bytes_written
+                    else:
+                        raise ValueError(f"Unexpected response from server: {msg}")
             elif msg != FuncFsServerResponse.ACK:
                 raise ValueError(f"Unexpected response from server: {msg}")
             else:

@@ -1,3 +1,6 @@
 #!/bin/bash
 modprobe libcomposite
-python "$(dirname "$(realpath "$0")")"/function_fs_server.py
+cd "$(dirname "$(realpath "$0")")"/../
+
+source venv/bin/activate
+python scripts/function_fs_server.py

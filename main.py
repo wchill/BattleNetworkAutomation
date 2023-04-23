@@ -102,6 +102,55 @@ def spam_buster(c: Controller, v: cv.VideoCapture) -> None:
             c.press_button(Button.B, 0.1)
 
 
+def save(c: Controller, v:cv.VideoCapture) -> None:
+    c.press_button(Button.Plus)
+    c.p_wait(0.3)
+    c.press_dpad(DPad.Up)
+    c.p_wait(0.3)
+    c.press_button(Button.A)
+    c.p_wait(0.3)
+    c.press_button(Button.A)
+    c.p_wait(0.3)
+    c.press_button(Button.A)
+    c.p_wait(0.3)
+    c.press_button(Button.B)
+    c.p_wait(0.3)
+    c.press_button(Button.B)
+
+
+def main_battle_loop(controller: Controller, capture: cv.VideoCapture):
+    num_encounters = 0
+
+    while True:
+        if image_processing.in_battle(capture):
+            controller.p_wait(3.0)
+            # Reset cross selection if it pops up
+            controller.press_button(Button.B)
+
+            if image_processing.in_demoneye_battle(capture):
+                print("In sensor encounter")
+                sensor_encounter(controller, capture)
+            else:
+                print("In other encounter")
+                other_encounter(controller, capture)
+            num_encounters += 1
+            if num_encounters % 20 == 0:
+                save(controller, capture)
+        elif image_processing.on_results_screen(capture):
+            print("In results screen")
+            results_screen(controller, capture)
+        else:
+            print("In overworld")
+            controller.send_cmd(Command().press(Button.B).left_value(LeftStick.Max).left_angle(LeftStick.Up).sec(0.25))
+            controller.send_cmd(
+                Command().press(Button.B).left_value(LeftStick.Max).left_angle(LeftStick.Down).sec(0.25))
+
+
+def buy_spreaders(controller: Controller, capture: cv.VideoCapture):
+    while True:
+        controller.press_button(Button.A)
+
+
 if __name__ == '__main__':
     capture = cv.VideoCapture(0)
     if not capture.isOpened():
@@ -111,22 +160,8 @@ if __name__ == '__main__':
     with SocketSink("raspberrypi.local", 3000) as sink:
         controller = Controller(sink)
 
-        while True:
-            if image_processing.in_battle(capture):
-                controller.p_wait(3.0)
-                # Reset cross selection if it pops up
-                controller.press_button(Button.B)
+        # connect_controller(controller, capture)
+        # controller.press_button(Button.B)
+        # controller.press_button(Button.B)
 
-                if image_processing.in_demoneye_battle(capture):
-                    print("In sensor encounter")
-                    sensor_encounter(controller, capture)
-                else:
-                    print("In other encounter")
-                    other_encounter(controller, capture)
-            elif image_processing.on_results_screen(capture):
-                print("In results screen")
-                results_screen(controller, capture)
-            else:
-                print("In overworld")
-                controller.send_cmd(Command().press(Button.B).left_value(LeftStick.Max).left_angle(LeftStick.Up).sec(0.25))
-                controller.send_cmd(Command().press(Button.B).left_value(LeftStick.Max).left_angle(LeftStick.Down).sec(0.25))
+        buy_spreaders(controller, capture)
