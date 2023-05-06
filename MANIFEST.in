@@ -1,0 +1,2 @@
+include src/bn_automation/data/*
+include src/bn_automation/images/*

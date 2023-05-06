@@ -1,0 +1,621 @@
+[
+  {
+    "id": "001",
+    "name": "Roll",
+    "codes": [
+      "R",
+      "*"
+    ],
+    "mb": 20,
+    "atk": 20,
+    "element": "Null"
+  },
+  {
+    "id": "002",
+    "name": "Roll2",
+    "codes": [
+      "R"
+    ],
+    "mb": 40,
+    "atk": 40,
+    "element": "Null"
+  },
+  {
+    "id": "003",
+    "name": "Roll3",
+    "codes": [
+      "R"
+    ],
+    "mb": 60,
+    "atk": 60,
+    "element": "Null"
+  },
+  {
+    "id": "004",
+    "name": "ProtoMan",
+    "codes": [
+      "B",
+      "*"
+    ],
+    "mb": 41,
+    "atk": 150,
+    "element": "Sword"
+  },
+  {
+    "id": "005",
+    "name": "ProtoMnEX",
+    "codes": [
+      "B"
+    ],
+    "mb": 53,
+    "atk": 170,
+    "element": "Sword"
+  },
+  {
+    "id": "006",
+    "name": "ProtoMnSP",
+    "codes": [
+      "B"
+    ],
+    "mb": 68,
+    "atk": 290,
+    "element": "Sword"
+  },
+  {
+    "id": "CG 007",
+    "name": "HeatMan",
+    "codes": [
+      "H",
+      "*"
+    ],
+    "mb": 32,
+    "atk": 100,
+    "element": "Fire"
+  },
+  {
+    "id": "CG 008",
+    "name": "HeatManEX",
+    "codes": [
+      "H"
+    ],
+    "mb": 55,
+    "atk": 130,
+    "element": "Fire"
+  },
+  {
+    "id": "CG 009",
+    "name": "HeatManSP",
+    "codes": [
+      "H"
+    ],
+    "mb": 70,
+    "atk": 260,
+    "element": "Fire"
+  },
+  {
+    "id": "CG 010",
+    "name": "ElecMan",
+    "codes": [
+      "E",
+      "*"
+    ],
+    "mb": 38,
+    "atk": 120,
+    "element": "Elec"
+  },
+  {
+    "id": "CG 011",
+    "name": "ElecManEX",
+    "codes": [
+      "E"
+    ],
+    "mb": 52,
+    "atk": 140,
+    "element": "Elec"
+  },
+  {
+    "id": "CG 012",
+    "name": "ElecManSP",
+    "codes": [
+      "E"
+    ],
+    "mb": 79,
+    "atk": 210,
+    "element": "Elec"
+  },
+  {
+    "id": "CG 013",
+    "name": "SlashMan",
+    "codes": [
+      "S",
+      "*"
+    ],
+    "mb": 42,
+    "atk": 80,
+    "element": "Sword"
+  },
+  {
+    "id": "CG 014",
+    "name": "SlashMnEX",
+    "codes": [
+      "S"
+    ],
+    "mb": 65,
+    "atk": 100,
+    "element": "Sword"
+  },
+  {
+    "id": "CG 015",
+    "name": "SlashMnSP",
+    "codes": [
+      "S"
+    ],
+    "mb": 79,
+    "atk": 220,
+    "element": "Sword"
+  },
+  {
+    "id": "CG 016",
+    "name": "EraseMan",
+    "codes": [
+      "K",
+      "*"
+    ],
+    "mb": 51,
+    "atk": 120,
+    "element": "Cursor"
+  },
+  {
+    "id": "CG 017",
+    "name": "EraseMnEX",
+    "codes": [
+      "K"
+    ],
+    "mb": 65,
+    "atk": 140,
+    "element": "Cursor"
+  },
+  {
+    "id": "CG 018",
+    "name": "EraseMnSP",
+    "codes": [
+      "K"
+    ],
+    "mb": 79,
+    "atk": 210,
+    "element": "Cursor"
+  },
+  {
+    "id": "CG 019",
+    "name": "ChrgeMan",
+    "codes": [
+      "C",
+      "*"
+    ],
+    "mb": 42,
+    "atk": 60,
+    "element": "Null"
+  },
+  {
+    "id": "CG 020",
+    "name": "ChrgeMnEX",
+    "codes": [
+      "C"
+    ],
+    "mb": 63,
+    "atk": 70,
+    "element": "Null"
+  },
+  {
+    "id": "CG 021",
+    "name": "ChrgeMnSP",
+    "codes": [
+      "C"
+    ],
+    "mb": 81,
+    "atk": 130,
+    "element": "Null"
+  },
+  {
+    "id": "CF 007",
+    "name": "AquaMan",
+    "codes": [
+      "A",
+      "*"
+    ],
+    "mb": 42,
+    "atk": 50,
+    "element": "Water"
+  },
+  {
+    "id": "CF 008",
+    "name": "AquaManEX",
+    "codes": [
+      "A"
+    ],
+    "mb": 56,
+    "atk": 60,
+    "element": "Water"
+  },
+  {
+    "id": "CF 009",
+    "name": "AquaManSP",
+    "codes": [
+      "A"
+    ],
+    "mb": 78,
+    "atk": 120,
+    "element": "Water"
+  },
+  {
+    "id": "CF 010",
+    "name": "TmhkMan",
+    "codes": [
+      "T",
+      "*"
+    ],
+    "mb": 40,
+    "atk": 140,
+    "element": "Wood"
+  },
+  {
+    "id": "CF 011",
+    "name": "TmhkManEX",
+    "codes": [
+      "T"
+    ],
+    "mb": 60,
+    "atk": 160,
+    "element": "Wood"
+  },
+  {
+    "id": "CF 012",
+    "name": "TmhkManSP",
+    "codes": [
+      "T"
+    ],
+    "mb": 80,
+    "atk": 280,
+    "element": "Wood"
+  },
+  {
+    "id": "CF 013",
+    "name": "TenguMan",
+    "codes": [
+      "T",
+      "*"
+    ],
+    "mb": 43,
+    "atk": 70,
+    "element": "Wind"
+  },
+  {
+    "id": "CF 014",
+    "name": "TenguMnEX",
+    "codes": [
+      "T"
+    ],
+    "mb": 61,
+    "atk": 90,
+    "element": "Wind"
+  },
+  {
+    "id": "CF 015",
+    "name": "TenguMnSP",
+    "codes": [
+      "T"
+    ],
+    "mb": 74,
+    "atk": 160,
+    "element": "Wind"
+  },
+  {
+    "id": "CF 016",
+    "name": "GrndMan",
+    "codes": [
+      "G",
+      "*"
+    ],
+    "mb": 41,
+    "atk": 60,
+    "element": "Break"
+  },
+  {
+    "id": "CF 017",
+    "name": "GrndManEX",
+    "codes": [
+      "G"
+    ],
+    "mb": 66,
+    "atk": 70,
+    "element": "Break"
+  },
+  {
+    "id": "CF 018",
+    "name": "GrndManSP",
+    "codes": [
+      "G"
+    ],
+    "mb": 85,
+    "atk": 130,
+    "element": "Break"
+  },
+  {
+    "id": "CF 019",
+    "name": "DustMan",
+    "codes": [
+      "D",
+      "*"
+    ],
+    "mb": 39,
+    "atk": 110,
+    "element": "Null"
+  },
+  {
+    "id": "CF 020",
+    "name": "DustManEX",
+    "codes": [
+      "D"
+    ],
+    "mb": 56,
+    "atk": 130,
+    "element": "Null"
+  },
+  {
+    "id": "CF 021",
+    "name": "DustManSP",
+    "codes": [
+      "D"
+    ],
+    "mb": 74,
+    "atk": 200,
+    "element": "Null"
+  },
+  {
+    "id": "022",
+    "name": "BlastMan",
+    "codes": [
+      "B",
+      "*"
+    ],
+    "mb": 30,
+    "atk": 120,
+    "element": "Fire"
+  },
+  {
+    "id": "023",
+    "name": "BlastMnEX",
+    "codes": [
+      "B"
+    ],
+    "mb": 49,
+    "atk": 140,
+    "element": "Fire"
+  },
+  {
+    "id": "024",
+    "name": "BlastMnSP",
+    "codes": [
+      "B"
+    ],
+    "mb": 68,
+    "atk": 250,
+    "element": "Fire"
+  },
+  {
+    "id": "025",
+    "name": "DiveMan",
+    "codes": [
+      "D",
+      "*"
+    ],
+    "mb": 45,
+    "atk": 130,
+    "element": "Water"
+  },
+  {
+    "id": "026",
+    "name": "DiveManEX",
+    "codes": [
+      "D"
+    ],
+    "mb": 60,
+    "atk": 150,
+    "element": "Water"
+  },
+  {
+    "id": "027",
+    "name": "DiveManSP",
+    "codes": [
+      "D"
+    ],
+    "mb": 75,
+    "atk": 270,
+    "element": "Water"
+  },
+  {
+    "id": "028",
+    "name": "CrcusMan",
+    "codes": [
+      "C",
+      "*"
+    ],
+    "mb": 42,
+    "atk": 20,
+    "element": "Null"
+  },
+  {
+    "id": "029",
+    "name": "CrcusMnEX",
+    "codes": [
+      "C"
+    ],
+    "mb": 64,
+    "atk": 25,
+    "element": "Null"
+  },
+  {
+    "id": "030",
+    "name": "CrcusMnSP",
+    "codes": [
+      "C"
+    ],
+    "mb": 86,
+    "atk": 55,
+    "element": "Null"
+  },
+  {
+    "id": "031",
+    "name": "JudgeMan",
+    "codes": [
+      "J",
+      "*"
+    ],
+    "mb": 52,
+    "atk": 100,
+    "element": "Elec"
+  },
+  {
+    "id": "032",
+    "name": "JudgeMnEX",
+    "codes": [
+      "J"
+    ],
+    "mb": 62,
+    "atk": 120,
+    "element": "Elec"
+  },
+  {
+    "id": "033",
+    "name": "JudgeMnSP",
+    "codes": [
+      "J"
+    ],
+    "mb": 72,
+    "atk": 190,
+    "element": "Elec"
+  },
+  {
+    "id": "034",
+    "name": "ElmntMan",
+    "codes": [
+      "E",
+      "*"
+    ],
+    "mb": 50,
+    "atk": 100,
+    "element": "Null"
+  },
+  {
+    "id": "035",
+    "name": "ElmntMnEX",
+    "codes": [
+      "E"
+    ],
+    "mb": 53,
+    "atk": 120,
+    "element": "Null"
+  },
+  {
+    "id": "036",
+    "name": "ElmntMnSP",
+    "codes": [
+      "E"
+    ],
+    "mb": 66,
+    "atk": 240,
+    "element": "Null"
+  },
+  {
+    "id": "037",
+    "name": "Colonel",
+    "codes": [
+      "C",
+      "*"
+    ],
+    "mb": 45,
+    "atk": 160,
+    "element": "Sword"
+  },
+  {
+    "id": "038",
+    "name": "ColonelEX",
+    "codes": [
+      "C"
+    ],
+    "mb": 70,
+    "atk": 180,
+    "element": "Sword"
+  },
+  {
+    "id": "039",
+    "name": "ColonelSP",
+    "codes": [
+      "C"
+    ],
+    "mb": 91,
+    "atk": 300,
+    "element": "Sword"
+  },
+  {
+    "id": "040",
+    "name": "Count",
+    "codes": [
+      "H", "*"
+    ],
+    "mb": 60,
+    "atk": 20,
+    "element": "Null"
+  },
+  {
+    "id": "041",
+    "name": "CountEX",
+    "codes": [
+      "H"
+    ],
+    "mb": 75,
+    "atk": 25,
+    "element": "Null"
+  },
+  {
+    "id": "042",
+    "name": "CountSP",
+    "codes": [
+      "H"
+    ],
+    "mb": 89,
+    "atk": 50,
+    "element": "Null"
+  },
+  {
+    "id": "043",
+    "name": "Django",
+    "codes": [
+      "D",
+      "*"
+    ],
+    "mb": 30,
+    "atk": 130,
+    "element": "Null"
+  },
+  {
+    "id": "044",
+    "name": "Django2",
+    "codes": [
+      "D"
+    ],
+    "mb": 70,
+    "atk": 180,
+    "element": "Null"
+  },
+  {
+    "id": "045",
+    "name": "Django3",
+    "codes": [
+      "D"
+    ],
+    "mb": 90,
+    "atk": 260,
+    "element": "Null"
+  }
+]

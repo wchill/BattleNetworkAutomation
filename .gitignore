@@ -131,4 +131,5 @@ dmypy.json
 # PyCharm
 .idea/
 
-frame.png
+config.json
+temp/

@@ -1,9 +1,8 @@
 import ipaddress
 import socket
-import time
 
+from ..commands import ControllerRequest, ControllerResponse
 from . import ControllerSink
-from utils.structs import FuncFsServerRequest, FuncFsServerResponse
 
 
 class SocketSink(ControllerSink):
@@ -27,8 +26,8 @@ class SocketSink(ControllerSink):
 
         # wait for connection
         while True:
-            msg = FuncFsServerResponse.from_bytes(self.sock.recv(1), byteorder='little')
-            if msg == FuncFsServerResponse.HOST_ENABLED:
+            msg = ControllerResponse.from_bytes(self.sock.recv(1), byteorder="little")
+            if msg == ControllerResponse.HOST_ENABLED:
                 break
             else:
                 raise ValueError(f"Unexpected response from server: {msg}")
@@ -45,23 +44,23 @@ class SocketWrapper:
     def __init__(self, sock):
         self.sock = sock
 
-    def write(self, data):
-        # This wrapper only handles report updates
-        bytes_written = self.sock.send(FuncFsServerRequest.UPDATE_REPORT.serialize() + data)
+    def write(self, command: ControllerRequest, data: bytes):
+        bytes_written = self.sock.send(command.serialize() + data)
         while True:
-            msg = FuncFsServerResponse.from_bytes(self.sock.recv(1), byteorder='little')
+            msg = ControllerResponse.from_bytes(self.sock.recv(1), byteorder="little")
             if msg is None:
                 raise RuntimeError("Socket closed unexpectedly")
-            elif msg == FuncFsServerResponse.USER_OVERRIDE:
+            elif msg == ControllerResponse.USER_OVERRIDE:
                 print("User override, waiting for server to unblock")
                 while True:
-                    msg = FuncFsServerResponse.from_bytes(self.sock.recv(1), byteorder='little')
-                    if msg == FuncFsServerResponse.HOST_ENABLED:
-                        print("Unblocked")
-                        return bytes_written
+                    msg = ControllerResponse.from_bytes(self.sock.recv(1), byteorder="little")
+                    if msg == ControllerResponse.HOST_ENABLED:
+                        print("Unblocked, retrying")
+                        self.sock.send(command.serialize() + data)
+                        break
                     else:
                         raise ValueError(f"Unexpected response from server: {msg}")
-            elif msg != FuncFsServerResponse.ACK:
+            elif msg != ControllerResponse.ACK:
                 raise ValueError(f"Unexpected response from server: {msg}")
             else:
                 return bytes_written

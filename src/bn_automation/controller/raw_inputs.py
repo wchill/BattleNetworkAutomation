@@ -28,15 +28,15 @@ class RawButton(ExtendedIntFlagEnum):
 class _RawDPad:
     SHIFT_BITS = 16
 
-    Center    = 0x08 << SHIFT_BITS
-    Up        = 0x00 << SHIFT_BITS
-    UpRight   = 0x01 << SHIFT_BITS
-    Right     = 0x02 << SHIFT_BITS
+    Center = 0x08 << SHIFT_BITS
+    Up = 0x00 << SHIFT_BITS
+    UpRight = 0x01 << SHIFT_BITS
+    Right = 0x02 << SHIFT_BITS
     DownRight = 0x03 << SHIFT_BITS
-    Down      = 0x04 << SHIFT_BITS
-    DownLeft  = 0x05 << SHIFT_BITS
-    Left      = 0x06 << SHIFT_BITS
-    UpLeft    = 0x07 << SHIFT_BITS
+    Down = 0x04 << SHIFT_BITS
+    DownLeft = 0x05 << SHIFT_BITS
+    Left = 0x06 << SHIFT_BITS
+    UpLeft = 0x07 << SHIFT_BITS
 
     Cardinals = [Up, Right, Down, Left]
     Diagonals = [UpRight, DownRight, UpLeft, DownLeft]
@@ -57,15 +57,15 @@ class _RawDPad:
 
 
 class RawDPad(ExtendedIntFlagEnum):
-    Center    = _RawDPad.Center
-    Up        = _RawDPad.Up       
-    UpRight   = _RawDPad.UpRight  
-    Right     = _RawDPad.Right    
+    Center = _RawDPad.Center
+    Up = _RawDPad.Up
+    UpRight = _RawDPad.UpRight
+    Right = _RawDPad.Right
     DownRight = _RawDPad.DownRight
-    Down      = _RawDPad.Down     
-    DownLeft  = _RawDPad.DownLeft 
-    Left      = _RawDPad.Left     
-    UpLeft    = _RawDPad.UpLeft
+    Down = _RawDPad.Down
+    DownLeft = _RawDPad.DownLeft
+    Left = _RawDPad.Left
+    UpLeft = _RawDPad.UpLeft
 
 
 def to_hex(shift_bits, x: int, y: int):
@@ -75,14 +75,14 @@ def to_hex(shift_bits, x: int, y: int):
 class RawLeftStick:
     SHIFT_BITS = 40
 
-    Center    = to_hex(SHIFT_BITS, 0x80, 0x80)
-    Right     = to_hex(SHIFT_BITS, 0xFF, 0x80)
-    UpRight   = to_hex(SHIFT_BITS, 0xFF, 0x00)
-    Up        = to_hex(SHIFT_BITS, 0x80, 0x00)
-    UpLeft    = to_hex(SHIFT_BITS, 0x00, 0x00)
-    Left      = to_hex(SHIFT_BITS, 0x00, 0x80)
-    DownLeft  = to_hex(SHIFT_BITS, 0x00, 0xFF)
-    Down      = to_hex(SHIFT_BITS, 0x80, 0xFF)
+    Center = to_hex(SHIFT_BITS, 0x80, 0x80)
+    Right = to_hex(SHIFT_BITS, 0xFF, 0x80)
+    UpRight = to_hex(SHIFT_BITS, 0xFF, 0x00)
+    Up = to_hex(SHIFT_BITS, 0x80, 0x00)
+    UpLeft = to_hex(SHIFT_BITS, 0x00, 0x00)
+    Left = to_hex(SHIFT_BITS, 0x00, 0x80)
+    DownLeft = to_hex(SHIFT_BITS, 0x00, 0xFF)
+    Down = to_hex(SHIFT_BITS, 0x80, 0xFF)
     DownRight = to_hex(SHIFT_BITS, 0xFF, 0x00)
 
     @classmethod
@@ -93,14 +93,14 @@ class RawLeftStick:
 class RawRightStick:
     SHIFT_BITS = 24
 
-    Center    = to_hex(SHIFT_BITS, 0x80, 0x80)
-    Right     = to_hex(SHIFT_BITS, 0xFF, 0x80)
-    UpRight   = to_hex(SHIFT_BITS, 0xFF, 0x00)
-    Up        = to_hex(SHIFT_BITS, 0x80, 0x00)
-    UpLeft    = to_hex(SHIFT_BITS, 0x00, 0x00)
-    Left      = to_hex(SHIFT_BITS, 0x00, 0x80)
-    DownLeft  = to_hex(SHIFT_BITS, 0x00, 0xFF)
-    Down      = to_hex(SHIFT_BITS, 0x80, 0xFF)
+    Center = to_hex(SHIFT_BITS, 0x80, 0x80)
+    Right = to_hex(SHIFT_BITS, 0xFF, 0x80)
+    UpRight = to_hex(SHIFT_BITS, 0xFF, 0x00)
+    Up = to_hex(SHIFT_BITS, 0x80, 0x00)
+    UpLeft = to_hex(SHIFT_BITS, 0x00, 0x00)
+    Left = to_hex(SHIFT_BITS, 0x00, 0x80)
+    DownLeft = to_hex(SHIFT_BITS, 0x00, 0xFF)
+    Down = to_hex(SHIFT_BITS, 0x80, 0xFF)
     DownRight = to_hex(SHIFT_BITS, 0xFF, 0x00)
 
     @classmethod
@@ -108,4 +108,6 @@ class RawRightStick:
         return [cls.Center, cls.Right, cls.UpRight, cls.Up, cls.UpLeft, cls.Left, cls.DownLeft, cls.Down, cls.DownRight]
 
 
-EMPTY_REPORT = (RawButton.Nothing + RawDPad.Center + RawLeftStick.Center + RawRightStick.Center).to_bytes(8, byteorder='little')
+EMPTY_REPORT = (RawButton.Nothing + RawDPad.Center + RawLeftStick.Center + RawRightStick.Center).to_bytes(
+    8, byteorder="little"
+)

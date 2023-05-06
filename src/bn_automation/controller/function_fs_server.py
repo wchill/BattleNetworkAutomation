@@ -1,19 +1,26 @@
-import signal
+import collections
 import errno
+import getpass
+import inspect
+import signal
 import socket
 import threading
 import time
-import getpass
-from typing import Tuple
+from typing import Callable, Optional, Tuple
 
 import functionfs
-import inspect
+from functionfs.gadget import ConfigFunctionFFSSubprocess, GadgetSubprocessManager
 
-from functionfs.gadget import GadgetSubprocessManager, ConfigFunctionFFSSubprocess
-
-from utils.raw_inputs import EMPTY_REPORT, RawButton, RawDPad, RawLeftStick, RawRightStick, _RawDPad
-from utils.structs import FuncFsServerRequest, FuncFsServerResponse
-from utils import Gamepad
+from . import gamepad_input
+from .commands import ControllerRequest, ControllerResponse
+from .raw_inputs import (
+    EMPTY_REPORT,
+    RawButton,
+    RawDPad,
+    RawLeftStick,
+    RawRightStick,
+    _RawDPad,
+)
 
 """
 0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
@@ -58,9 +65,66 @@ from utils import Gamepad
 // 80 bytes
 """
 
-REPORT_DESCRIPTOR = b'\x05\x01\t\x05\xa1\x01\x15\x00%\x015\x00E\x01u\x01\x95\x0e\x05\t\x19\x01)\x0e\x81\x02\x95\x02' \
-                    b'\x81\x01\x05\x01%\x07F;\x01u\x04\x95\x01e\x14\t9\x81Be\x00\x95\x01\x81\x01&\xff\x00F\xff\x00\t0' \
-                    b'\t1\t2\t5u\x08\x95\x04\x81\x02u\x08\x95\x01\x81\x01\xc0 '
+REPORT_DESCRIPTOR = (
+    b"\x05\x01\t\x05\xa1\x01\x15\x00%\x015\x00E\x01u\x01\x95\x0e\x05\t\x19\x01)\x0e\x81\x02\x95\x02"
+    b"\x81\x01\x05\x01%\x07F;\x01u\x04\x95\x01e\x14\t9\x81Be\x00\x95\x01\x81\x01&\xff\x00F\xff\x00\t0"
+    b"\t1\t2\t5u\x08\x95\x04\x81\x02u\x08\x95\x01\x81\x01\xc0 "
+)
+
+
+def print_func_name_and_args():
+    stack_frame = inspect.stack()[1]
+    func = stack_frame.function
+    frame = stack_frame.frame
+    args, args_paramname, kwargs_paramname, values = inspect.getargvalues(frame)
+    arg_str = ",".join(f"{arg}={values[arg]}" for arg in args)
+    print(f"{func}({arg_str})")
+
+
+class HIDInEndpoint(functionfs.EndpointINFile):
+    """
+    Customise what happens on IN transfer completion.
+    In a real device, here may be where you would sample and clear the current
+    movement deltas, and construct a new HID report to send to the host.
+    """
+
+    def __init__(self, path, submit, eventfd):
+        super().__init__(path, submit, eventfd)
+        self.report_callback: Optional[Callable[..., bytes]] = None
+
+    def set_report_callback(self, callback: Callable[..., bytes]) -> None:
+        self.report_callback = callback
+
+    def onComplete(self, buffer_list, user_data, status):
+        if status < 0:
+            if status == -errno.ESHUTDOWN:
+                # Unplugged, host selected another configuration, ...
+                # Stop submitting the transfer.
+                return False
+            raise IOError(-status)
+
+        # Resubmit the transfer with a new report.
+        report = self.report_callback() if self.report_callback is not None else EMPTY_REPORT
+        return [bytearray(report)]
+
+
+class HIDOutEndpoint(functionfs.EndpointOUTFile):
+    def onComplete(self, data, status):
+        """
+        Called when this endpoint received data.
+        data (memoryview, None)
+            Data received, or None if there was an error.
+            Once this method returns the underlying buffer will be reused,
+            so you must copy any piece you cannot immediately process.
+        status (int, None)
+            Error code if there was an error (negative errno value), zero
+            otherwise.
+        May be overridden in subclass.
+        """
+        if status < 0:
+            print(f"Error in OUT endpoint: errno {-status}")
+        else:
+            print(f"Got report from OUT endpoint: {data}")
 
 
 class UsbHidDevice(functionfs.HIDFunction):
@@ -69,23 +133,23 @@ class UsbHidDevice(functionfs.HIDFunction):
     """
 
     def __init__(
-            self,
-            path,
-            descriptor_dict=(),
-            fs_list=(),
-            hs_list=(),
-            ss_list=(),
-            os_list=(),
-            lang_dict=(),
-            all_ctrl_recip=False,
-            config0_setup=False,
-            is_boot_device=False,
-            protocol=functionfs.USB_INTERFACE_PROTOCOL_NONE,
-            country_code=0,
-            in_report_max_length=64,
-            out_report_max_length=64,
-            full_speed_interval=5,
-            high_speed_interval=6,
+        self,
+        path,
+        descriptor_dict=(),
+        fs_list=(),
+        hs_list=(),
+        ss_list=(),
+        os_list=(),
+        lang_dict=(),
+        all_ctrl_recip=False,
+        config0_setup=False,
+        is_boot_device=False,
+        protocol=functionfs.USB_INTERFACE_PROTOCOL_NONE,
+        country_code=0,
+        in_report_max_length=64,
+        out_report_max_length=64,
+        full_speed_interval=1,
+        high_speed_interval=4,
     ):
         """
         path, ss_list, os_list, lang_dict, all_ctrl_recip, config0_setup
@@ -167,15 +231,19 @@ class UsbHidDevice(functionfs.HIDFunction):
             in_report_max_length=in_report_max_length,
             out_report_max_length=out_report_max_length,
             full_speed_interval=full_speed_interval,
-            high_speed_interval=high_speed_interval
+            high_speed_interval=high_speed_interval,
         )
-        self.next_report = bytearray(EMPTY_REPORT)
-
         self._joystick_lock = threading.RLock()
         self._user_override_cv = threading.Condition()
+        self._gamepad_connected_cv = threading.Condition()
         self.using_gamepad = False
+
         self.gamepad_state = RawButton.Nothing + RawDPad.Center + RawLeftStick.Center + RawRightStick.Center
         self.dpad_state = [0, 0]
+
+        self.report_queue: collections.deque[Tuple[bytes, Optional[int]]] = collections.deque()
+        self.current_report: Tuple[bytes, Optional[int]] = (EMPTY_REPORT, None)
+
         self.joystick_thread = threading.Thread(target=self.handle_joystick, args=(), daemon=True)
         self.joystick_thread.start()
 
@@ -183,52 +251,78 @@ class UsbHidDevice(functionfs.HIDFunction):
         self.server_thread.start()
         self.enabled = False
 
-    def update_report(self, report: bytes) -> None:
-        self.next_report = bytearray(report)
-        self.getEndpoint(1).update_report(self.next_report)
+    def get_report(self) -> bytes:
+        if self.current_report[1] is None:
+            if len(self.report_queue) == 0:
+                # Current report with infinite repeat and nothing in queue, return report
+                return self.current_report[0]
+            else:
+                # Current report with infinite repeat and something in queue, process queue
+                self.current_report = self.report_queue.popleft()
+        elif self.current_report[1] < 0:
+            if len(self.report_queue) == 0:
+                # Current report with no repeats remaining and nothing in queue, use empty report
+                self.current_report = (EMPTY_REPORT, None)
+            else:
+                # Current report with no repeats remaining and something in queue, process queue
+                self.current_report = self.report_queue.popleft()
+
+        # Process report, decrement by 1 if not infinitely repeating
+        report, times = self.current_report
+        self.current_report = (report, times - 1 if times is not None else times)
+        return report
+
+    def add_report_to_queue(self, report: bytes, num_repeats: Optional[int] = 0) -> None:
+        print(report, num_repeats)
+        self.report_queue.append((report, num_repeats))
 
     @staticmethod
-    def send_response(conn: socket.socket, response_header: FuncFsServerResponse, response_body: bytes = b'') -> int:
-        data = response_header.to_bytes(1, byteorder='little', signed=False) + response_body
+    def send_response(conn: socket.socket, response_header: ControllerResponse, response_body: bytes = b"") -> int:
+        data = response_header.to_bytes(1, byteorder="little", signed=False) + response_body
         return conn.send(data)
 
     @staticmethod
-    def interpret_command(command: bytes) -> Tuple[FuncFsServerRequest, int]:
+    def interpret_command(command: bytes) -> Tuple[ControllerRequest, int]:
         if len(command) != 1:
             raise ValueError(f"Command should be exactly 1 byte: {command}")
         request_int = int.from_bytes(command, byteorder="little", signed=False)
-        request = FuncFsServerRequest(request_int)
+        request = ControllerRequest(request_int)
 
         # Specify how many more bytes are expected
-        if request == FuncFsServerRequest.UPDATE_REPORT:
+        if request == ControllerRequest.UPDATE_REPORT:
             return request, 8
+        elif request == ControllerRequest.UPDATE_REPORT_N_TIMES:
+            return request, 10
         else:
             return request, 0
 
     def handle_joystick(self):
-        if not Gamepad.available():
-            print('Gamepad not connected, waiting for gamepad connection')
-            while not Gamepad.available():
-                time.sleep(1)
-        gamepad = Gamepad.EightBitDoController()
-        print('Gamepad connected')
-        print(f'Button names: {gamepad.buttonNames}')
-        print(f'Axis names: {gamepad.axisNames}')
-
-        gamepad.startBackgroundUpdates()
-        for button in gamepad.buttonNames:
-            gamepad.addButtonChangedHandler(button, lambda is_pressed, button=button: self.handle_button_changed(gamepad.buttonNames[button], is_pressed))
-        for axis in gamepad.axisNames:
-            gamepad.addAxisMovedHandler(axis, lambda position, axis=axis: self.handle_axis_changed(gamepad.axisNames[axis], position))
+        while True:
+            with self._gamepad_connected_cv:
+                gamepad_input.monitor_gamepads(self._gamepad_connected_cv)
+                if len(gamepad_input.available_gamepads) == 0:
+                    print("Gamepad not connected, waiting for gamepad connection")
+                self._gamepad_connected_cv.wait_for(lambda: len(gamepad_input.available_gamepads) > 0)
+            try:
+                print("Gamepad connected, processing inputs")
+                active_device = list(gamepad_input.available_gamepads.values())[0]
+                active_device.handle_button_changed_callback = self.handle_button_changed
+                active_device.handle_axis_changed_callback = self.handle_axis_changed
+                active_device.process_updates()
+            except IndexError:
+                # Could happen due to race condition
+                continue
 
     def handle_button_changed(self, button: str, is_pressed: bool):
-        if button == "Home" and not is_pressed:
-            with self._joystick_lock:
-                self.using_gamepad = not self.using_gamepad
-                print(f"Using gamepad: {self.using_gamepad}")
-                if not self.using_gamepad:
-                    with self._user_override_cv:
-                        self._user_override_cv.notify()
+        if button == "Home":
+            if not is_pressed:
+                with self._joystick_lock:
+                    self.report_queue.clear()
+                    self.using_gamepad = not self.using_gamepad
+                    print(f"Using gamepad: {self.using_gamepad}")
+                    if not self.using_gamepad:
+                        with self._user_override_cv:
+                            self._user_override_cv.notify()
         else:
             if is_pressed:
                 self.gamepad_state |= RawButton[button]
@@ -237,11 +331,11 @@ class UsbHidDevice(functionfs.HIDFunction):
 
             with self._joystick_lock:
                 if self.using_gamepad:
-                    report = self.gamepad_state.to_bytes(8, byteorder='little')
-                    self.update_report(report)
+                    report = self.gamepad_state.to_bytes(8, byteorder="little")
+                    self.current_report = report, None
 
     def handle_axis_changed(self, axis: str, position: float):
-        if axis == "L2" or axis == "R2":
+        if axis == "ZL" or axis == "ZR":
             if position < 0:
                 self.gamepad_state &= ~RawButton[axis]
             else:
@@ -259,7 +353,7 @@ class UsbHidDevice(functionfs.HIDFunction):
                 (0, 1): RawDPad.Down,
                 (1, -1): RawDPad.UpRight,
                 (1, 0): RawDPad.Right,
-                (1, 1): RawDPad.DownRight
+                (1, 1): RawDPad.DownRight,
             }
             self.gamepad_state &= ~(0xFF << _RawDPad.SHIFT_BITS)
             self.gamepad_state |= lookup_table[dpad_tuple]
@@ -271,16 +365,16 @@ class UsbHidDevice(functionfs.HIDFunction):
 
             int_pos = min(max(int(position * 256 + 128.5), 0), 255)
             self.gamepad_state &= ~(0xFF << shift_bits)
-            self.gamepad_state |= (int_pos << shift_bits)
+            self.gamepad_state |= int_pos << shift_bits
 
         with self._joystick_lock:
             if self.using_gamepad:
-                report = self.gamepad_state.to_bytes(8, byteorder='little')
-                self.update_report(report)
+                report = self.gamepad_state.to_bytes(8, byteorder="little")
+                self.current_report = report, None
 
     def listen_on_socket(self):
         sock = socket.socket()
-        sock.bind(('0.0.0.0', 3000))
+        sock.bind(("0.0.0.0", 3000))
         sock.listen(1)
 
         should_stop = False
@@ -292,7 +386,7 @@ class UsbHidDevice(functionfs.HIDFunction):
                     while not self.enabled:
                         time.sleep(0.1)
                     print(f"USB host enabled endpoint, unblocking client")
-                    self.send_response(conn, FuncFsServerResponse.HOST_ENABLED)
+                    self.send_response(conn, ControllerResponse.HOST_ENABLED)
 
                     while True:
                         command = conn.recv(1)
@@ -303,29 +397,36 @@ class UsbHidDevice(functionfs.HIDFunction):
                         request, num_bytes_needed = self.interpret_command(command)
 
                         bytes_recv = 0
-                        msg = b''
+                        msg = b""
                         while bytes_recv < num_bytes_needed:
-                            msg += conn.recv(8 - bytes_recv)
+                            msg += conn.recv(num_bytes_needed - bytes_recv)
                             bytes_recv = len(msg)
                             if not msg:
                                 conn.close()
 
-                        if request == FuncFsServerRequest.UPDATE_REPORT:
+                        if (
+                            request == ControllerRequest.UPDATE_REPORT
+                            or request == ControllerRequest.UPDATE_REPORT_N_TIMES
+                        ):
                             self._joystick_lock.acquire()
                             if self.using_gamepad:
                                 self._joystick_lock.release()
                                 print("Blocking client since user requested direct controller input")
-                                self.send_response(conn, FuncFsServerResponse.USER_OVERRIDE)
+                                self.send_response(conn, ControllerResponse.USER_OVERRIDE)
                                 with self._user_override_cv:
                                     while self.using_gamepad:
                                         self._user_override_cv.wait()
                                 print("Unblocking client since user disabled direct controller input")
-                                self.send_response(conn, FuncFsServerResponse.HOST_ENABLED)
+                                self.send_response(conn, ControllerResponse.HOST_ENABLED)
                             else:
-                                self.update_report(msg)
+                                if len(msg) > 8:
+                                    repeat_times = int.from_bytes(msg[8:10], byteorder="little")
+                                else:
+                                    repeat_times = None
+                                self.add_report_to_queue(msg, repeat_times)
                                 self._joystick_lock.release()
-                                self.send_response(conn, FuncFsServerResponse.ACK)
-                        elif request == FuncFsServerRequest.STOP:
+                                self.send_response(conn, ControllerResponse.ACK)
+                        elif request == ControllerRequest.STOP:
                             print(f"Stop requested")
                             should_stop = True
                             signal.raise_signal(signal.SIGINT)
@@ -335,76 +436,24 @@ class UsbHidDevice(functionfs.HIDFunction):
         finally:
             sock.close()
 
-    class HIDInEndpoint(functionfs.EndpointINFile):
-        """
-        Customise what happens on IN transfer completion.
-        In a real device, here may be where you would sample and clear the current
-        movement deltas, and construct a new HID report to send to the host.
-        """
-
-        def __init__(self, path, submit, eventfd):
-            super().__init__(path, submit, eventfd)
-            self.report = None
-            self.update_report(EMPTY_REPORT)
-
-        def update_report(self, report):
-            self.report = bytearray(report)
-
-        def onComplete(self, buffer_list, user_data, status):
-            if status < 0:
-                if status == -errno.ESHUTDOWN:
-                    # Mouse is unplugged, host selected another configuration, ...
-                    # Stop submitting the transfer.
-                    return False
-                raise IOError(-status)
-            # Resubmit the transfer. We did not change its buffer, so the
-            # mouse movement will carry on identically.
-            return [self.report]
-
-    class HIDOutEndpoint(functionfs.EndpointOUTFile):
-        def onComplete(self, data, status):
-            """
-            Called when this endpoint received data.
-            data (memoryview, None)
-                Data received, or None if there was an error.
-                Once this method returns the underlying buffer will be reused,
-                so you must copy any piece you cannot immediately process.
-            status (int, None)
-                Error code if there was an error (negative errno value), zero
-                otherwise.
-            May be overridden in subclass.
-            """
-            if status < 0:
-                print(f"Error in OUT endpoint: errno {-status}")
-            else:
-                print(f"Got report from OUT endpoint: {data}")
-
     def getEndpointClass(self, is_in, descriptor):
         """
         Tall HIDFunction that we want it to use our custom IN endpoint class
         for our only IN endpoint.
         """
-        return self.HIDInEndpoint if is_in else self.HIDOutEndpoint
+        return HIDInEndpoint if is_in else HIDOutEndpoint
 
     def onEnable(self):
         """
         We are plugged to a host, it has enumerated and enabled us, start
         sending reports.
         """
-        print('onEnable called')
+        print("onEnable called")
         super().onEnable()
         self.enabled = True
-        self.getEndpoint(1).submit(
-            (self.next_report,),
-        )
-
-    def printFuncNameAndArgs(self):
-        stack_frame = inspect.stack()[1]
-        func = stack_frame.function
-        frame = stack_frame.frame
-        args, args_paramname, kwargs_paramname, values = inspect.getargvalues(frame)
-        arg_str = ','.join(f"{arg}={values[arg]}" for arg in args)
-        print(f"{func}({arg_str})")
+        in_endpoint: HIDInEndpoint = self.getEndpoint(1)
+        in_endpoint.set_report_callback(self.get_report)
+        in_endpoint.submit((bytearray(EMPTY_REPORT),))
 
     def setInterfaceDescriptor(self, value, index, length):
         """
@@ -413,7 +462,7 @@ class UsbHidDevice(functionfs.HIDFunction):
         Call method on superclass (this class) otherwise so error is signaled
         to host.
         """
-        self.printFuncNameAndArgs()
+        print_func_name_and_args()
         super().setInterfaceDescriptor(value, index, length)
 
     def getHIDReport(self, value, index, length):
@@ -423,7 +472,8 @@ class UsbHidDevice(functionfs.HIDFunction):
         Call method on superclass (this class) otherwise so error is signaled
         to host.
         """
-        self.ep0.write(self.next_report)
+        print("getHIDReport()")
+        self.ep0.write(self.get_report())
 
     def getHIDIdle(self, value, index, length):
         """
@@ -432,7 +482,7 @@ class UsbHidDevice(functionfs.HIDFunction):
         Call method on superclass (this class) otherwise so error is signaled
         to host.
         """
-        self.printFuncNameAndArgs()
+        print_func_name_and_args()
         super().getHIDIdle(value, index, length)
 
     def getHIDProtocol(self, value, index, length):
@@ -443,7 +493,7 @@ class UsbHidDevice(functionfs.HIDFunction):
         Call method on superclass (this class) otherwise so error is signaled
         to host.
         """
-        self.printFuncNameAndArgs()
+        print_func_name_and_args()
         super().getHIDProtocol(value, index, length)
 
     def setHIDReport(self, value, index, length):
@@ -453,7 +503,7 @@ class UsbHidDevice(functionfs.HIDFunction):
         Call method on superclass (this class) otherwise so error is signaled
         to host.
         """
-        self.printFuncNameAndArgs()
+        print_func_name_and_args()
         super().setHIDReport(value, index, length)
 
     def setHIDIdle(self, value, index, length):
@@ -463,7 +513,7 @@ class UsbHidDevice(functionfs.HIDFunction):
         Call method on superclass (this class) otherwise so error is signaled
         to host.
         """
-        self.printFuncNameAndArgs()
+        print_func_name_and_args()
         super().setHIDIdle(value, index, length)
 
     def setHIDProtocol(self, value, index, length):
@@ -474,7 +524,7 @@ class UsbHidDevice(functionfs.HIDFunction):
         Call method on superclass (this class) otherwise so error is signaled
         to host.
         """
-        self.printFuncNameAndArgs()
+        print_func_name_and_args()
         super().setHIDProtocol(value, index, length)
 
 
@@ -492,14 +542,12 @@ def subprocess_manager():
                 config_list=[
                     # A single configuration
                     {
-                        'function_list': [
+                        "function_list": [
                             get_config_function_subprocess,
                         ],
-                        'MaxPower': 500,
-                        'lang_dict': {
-                            0x409: {
-
-                            },
+                        "MaxPower": 500,
+                        "lang_dict": {
+                            0x409: {},
                         },
                     }
                 ],
@@ -508,17 +556,14 @@ def subprocess_manager():
                 bcdDevice=0x0572,
                 lang_dict={
                     0x409: {
-                        'product': 'HORIPAD S',
-                        'manufacturer': 'HORI CO.,LTD.',
+                        "product": "HORIPAD S",
+                        "manufacturer": "HORI CO.,LTD.",
                     },
                 },
-                name='usbhid'
+                name="usbhid",
             )
         return _subprocess_manager
 
 
 def get_config_function_subprocess(**kwargs):
-    return ConfigFunctionFFSSubprocess(
-        getFunction=UsbHidDevice,
-        **kwargs
-    )
+    return ConfigFunctionFFSSubprocess(getFunction=UsbHidDevice, **kwargs)

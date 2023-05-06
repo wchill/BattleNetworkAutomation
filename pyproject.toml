@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "battle-network-automation"
+authors = [
+    {name = "wchill"}
+]
+description = "Automation for Battle Network Legacy Collection"
+requires-python = ">=3.7"
+version = "1.0"
+dependencies = [
+    "numpy",
+    "opencv-contrib-python",
+    "opencv-python",
+    "pytesseract",
+    "functionfs",
+    "libevdev",
+    "pyudev",
+    "discord.py"
+]
+
+[project.scripts]
+install-usbgadget = "bn_automation.scripts.install:install"
+start-server = "bn_automation.scripts.start_server:start_server"
+
+[tool.setuptools]
+platforms = ["linux"]
+
+[tool.black]
+line-length = 120
+target-version = ['py37']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+py_version = 37

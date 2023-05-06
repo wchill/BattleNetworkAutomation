@@ -9,7 +9,7 @@
     mode. See https://raspberrypi.stackexchange.com/a/119077
   * I wouldn't recommend running this on a Zero, Zero W, or 1 Model A since they have only a single core.
 * Elgato HD60 S+ / Cam Link / Cam Link 4k / some other capture card supported by OpenCV
-  * Some capture cards might not work out of the box, so you may have to use screen capture. 
+  * Some capture cards might not work out of the box, so you may have to use screen capture.
   * Some capture cards might only allow exclusive access, so running this script will prevent OBS or other software from
     displaying video. You can use an HDMI splitter for this.
   * If using a USB capture card, you can connect it directly to the Raspberry Pi. However, be wary of power usage.
@@ -20,7 +20,7 @@
     * `sudo apt update && sudo apt install -y git libaio1 python3-pip`
 3. As root, edit `/boot/config.txt` to add the line `dtoverlay=dwc2` to the bottom
     * `sudo bash -c "echo "dtoverlay=dwc2" >> /boot/overlay.txt`
-4. As root, edit `/etc/rc.local` to add the line `python $PROJECT_ROOT/function_fs_startup.sh` to the bottom _before_ 
+4. As root, edit `/etc/rc.local` to add the line `python $PROJECT_ROOT/function_fs_startup.sh` to the bottom _before_
    the line `exit 0`
     * Replace `$PROJECT_ROOT` with the correct folder path
 5. As root, install python dependencies

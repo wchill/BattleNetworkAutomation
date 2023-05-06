@@ -1,0 +1,42 @@
+[
+  {
+    "id": "059",
+    "name": "BigBomb",
+    "codes": [
+      "O"
+    ],
+    "mb": 32,
+    "atk": 140,
+    "element": "Null"
+  },
+  {
+    "id": "089",
+    "name": "DublShot",
+    "codes": [
+      "C"
+    ],
+    "mb": 8,
+    "atk": 60,
+    "element": "Null"
+  },
+  {
+    "id": "120",
+    "name": "HiBoomer",
+    "codes": [
+      "V"
+    ],
+    "mb": 26,
+    "atk": 140,
+    "element": "Wood"
+  },
+  {
+    "id": "167",
+    "name": "GrabRvng",
+    "codes": [
+      "I"
+    ],
+    "mb": 50,
+    "atk": 0,
+    "element": "Null"
+  }
+]
