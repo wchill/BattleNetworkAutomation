@@ -38,5 +38,25 @@
     "mb": 50,
     "atk": 0,
     "element": "Null"
+  },
+  {
+    "id": "CF ---",
+    "name": "Falzar",
+    "codes": [
+      "X"
+    ],
+    "mb": 99,
+    "atk": 100,
+    "element": "Null"
+  },
+  {
+    "id": "CG ---",
+    "name": "Gregar",
+    "codes": [
+      "X"
+    ],
+    "mb": 99,
+    "atk": 300,
+    "element": "Null"
   }
 ]

@@ -259,13 +259,16 @@ class UsbHidDevice(functionfs.HIDFunction):
             else:
                 # Current report with infinite repeat and something in queue, process queue
                 self.current_report = self.report_queue.popleft()
+                # print(self.current_report)
         elif self.current_report[1] < 0:
             if len(self.report_queue) == 0:
                 # Current report with no repeats remaining and nothing in queue, use empty report
                 self.current_report = (EMPTY_REPORT, None)
+                # print(self.current_report)
             else:
                 # Current report with no repeats remaining and something in queue, process queue
                 self.current_report = self.report_queue.popleft()
+                # print(self.current_report)
 
         # Process report, decrement by 1 if not infinitely repeating
         report, times = self.current_report
@@ -273,7 +276,6 @@ class UsbHidDevice(functionfs.HIDFunction):
         return report
 
     def add_report_to_queue(self, report: bytes, num_repeats: Optional[int] = 0) -> None:
-        print(report, num_repeats)
         self.report_queue.append((report, num_repeats))
 
     @staticmethod
@@ -374,6 +376,7 @@ class UsbHidDevice(functionfs.HIDFunction):
 
     def listen_on_socket(self):
         sock = socket.socket()
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(("0.0.0.0", 3000))
         sock.listen(1)
 

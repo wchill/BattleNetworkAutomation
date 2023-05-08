@@ -1,4 +1,5 @@
 import os
+from typing import Any, Tuple
 
 import cv2 as cv
 import numpy as np
@@ -9,6 +10,16 @@ RESULT_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "result
 CHIPSELECT_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "chipselect_165_656.png"), cv.IMREAD_COLOR)
 CUSTOM_TEXT_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "custom_828_1.png"), cv.IMREAD_COLOR)
 CONTROLLER_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "controller_596_336.png"), cv.IMREAD_COLOR)
+
+
+CAPTURE = None
+
+
+def capture():
+    global CAPTURE
+    if CAPTURE is None:
+        CAPTURE = cv.VideoCapture(0)
+    return CAPTURE.read()[1]
 
 
 def read_zenny(capture: cv.VideoCapture) -> int:
@@ -65,8 +76,21 @@ def convert_image_to_png_bytestring(image):
     return cv.imencode(".png", image)[1].tobytes()
 
 
+def scale_coords(image: Any, assumed_size: Tuple[int, int], coordinates: Tuple[int, int]) -> Tuple[int, int]:
+    actual_h, actual_w, _ = image.shape
+    desired_w, desired_h = assumed_size
+
+    height_scale = actual_h / desired_h
+    width_scale = actual_w / desired_w
+
+    return round(coordinates[0] * width_scale), round(coordinates[1] * height_scale)
+
+
 def run_tesseract(image, top_left, text_size, config, invert):
-    roi = crop_image(image, top_left, text_size)
+    scaled_top_left = scale_coords(image, (1920, 1080), top_left)
+    scaled_text_size = scale_coords(image, (1920, 1080), text_size)
+
+    roi = crop_image(image, scaled_top_left, scaled_text_size)
     gray_image = cv.cvtColor(roi, cv.COLOR_BGR2GRAY)
     _, bw_image = cv.threshold(gray_image, 30, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
     if invert:
@@ -107,7 +131,10 @@ def on_results_screen(capture: cv.VideoCapture) -> bool:
 
 def is_image_matching(image, template, min_x, min_y, crop_pixels=5):
     template_height, template_width, _ = template.shape
-    template = template[crop_pixels : template_height - crop_pixels, crop_pixels : template_width - crop_pixels]
+    scaled_template_w, scaled_template_h = scale_coords(image, (1920, 1080), (template_width, template_height))
+    template = cv.resize(template, (scaled_template_w, scaled_template_h), interpolation=cv.INTER_AREA)
+    template = template[crop_pixels : scaled_template_h - crop_pixels, crop_pixels : scaled_template_w - crop_pixels]
+
     template_height, template_width, _ = template.shape
 
     img_height, img_width, _ = image.shape

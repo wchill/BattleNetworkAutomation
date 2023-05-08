@@ -8,6 +8,8 @@ appendfile() {
   echo "Adding '$line' to $f" && (grep -qxF "$line" $f || echo "$line" >> $f)
 }
 
+# TODO: create virtualenv and stuff
+
 echo "Writing udev rule for TC358743 HDMI module"
 echo ACTION=="add", SUBSYSTEM=="video4linux", ATTR\{name\}=="unicam-image", RUN+="$DIR/setup_tc358743.sh" > /usr/lib/udev/rules.d/90-tc358743.rules
 
@@ -25,7 +27,7 @@ appendfile $TEXT $FILE
 
 # Create systemd service file
 UNITFILE='/etc/systemd/system/usb-gadget.service'
-STARTUP_SCRIPT="$DIR/function_fs_startup.sh"
+STARTUP_CMD="$DIR/../../../venv/bin/python -u $DIR/start_server.py"
 
 echo "Writing systemd service file to $UNITFILE"
 
@@ -36,13 +38,15 @@ After=network-online.target
 Wants=network-online.target
 #After=systemd-modules-load.service
 [Service]
-Type=oneshot
+Type=simple
 RemainAfterExit=yes
-ExecStart=$STARTUP_SCRIPT
+ExecStart=$STARTUP_CMD
+StandardOutput=journal+console
 [Install]
 WantedBy=sysinit.target
 EOF
 systemctl daemon-reload
+systemctl enable usb-gadget
 
 echo "Rebooting!"
 reboot

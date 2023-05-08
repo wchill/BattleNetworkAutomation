@@ -6,3 +6,5 @@ functionfs
 discord.py
 libevdev
 pyudev
+python-statemachine
+python-statemachine[diagrams]

@@ -617,5 +617,15 @@
     "mb": 90,
     "atk": 260,
     "element": "Null"
+  },
+  {
+    "id": "---",
+    "name": "DblBeast",
+    "codes": [
+      "W"
+    ],
+    "mb": 99,
+    "atk": 0,
+    "element": "Null"
   }
 ]

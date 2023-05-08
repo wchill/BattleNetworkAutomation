@@ -1,0 +1,122 @@
+[
+  {
+    "id": "CF 001",
+    "name": "BassAnly",
+    "codes": [
+      "F"
+    ],
+    "mb": 95,
+    "atk": 160,
+    "element": "Null"
+  },
+  {
+    "id": "CF 002",
+    "name": "MetrKnuk",
+    "codes": [
+      "N"
+    ],
+    "mb": 90,
+    "atk": 100,
+    "element": "Break"
+  },
+  {
+    "id": "CF 003",
+    "name": "CrossDiv",
+    "codes": [
+      "D"
+    ],
+    "mb": 93,
+    "atk": 250,
+    "element": "Sword"
+  },
+  {
+    "id": "CF 004",
+    "name": "HubBatc",
+    "codes": [
+      "J"
+    ],
+    "mb": 99,
+    "atk": 0,
+    "element": "Null"
+  },
+  {
+    "id": "CF 005",
+    "name": "BgDthThd",
+    "codes": [
+      "V"
+    ],
+    "mb": 80,
+    "atk": 0,
+    "element": "Elec"
+  },
+  {
+    "id": "CF ---",
+    "name": "Falzar",
+    "codes": [
+      "X"
+    ],
+    "mb": 99,
+    "atk": 100,
+    "element": "Null"
+  },
+  {
+    "id": "CG 001",
+    "name": "Bass",
+    "codes": [
+      "F"
+    ],
+    "mb": 95,
+    "atk": 60,
+    "element": "Null"
+  },
+  {
+    "id": "CG 002",
+    "name": "BigHook",
+    "codes": [
+      "H"
+    ],
+    "mb": 92,
+    "atk": 240,
+    "element": "Break"
+  },
+  {
+    "id": "CG 003",
+    "name": "DeltaRay",
+    "codes": [
+      "Z"
+    ],
+    "mb": 82,
+    "atk": 250,
+    "element": "Sword"
+  },
+  {
+    "id": "CG 004",
+    "name": "ColForce",
+    "codes": [
+      "Q"
+    ],
+    "mb": 90,
+    "atk": 30,
+    "element": "Null"
+  },
+  {
+    "id": "CG 005",
+    "name": "BugRSwrd",
+    "codes": [
+      "V"
+    ],
+    "mb": 80,
+    "atk": 0,
+    "element": "Sword"
+  },
+  {
+    "id": "CG ---",
+    "name": "Gregar",
+    "codes": [
+      "X"
+    ],
+    "mb": 99,
+    "atk": 300,
+    "element": "Null"
+  }
+]

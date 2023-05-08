@@ -64,54 +64,41 @@ class Command:
         self._stick_angle = 0
         self._stick_intensity = 0
         self.time = 0
-        self.wait_time = 0
 
-    def press(self, button):
+    def press(self, button: Button) -> "Command":
         self._buttons |= button
         return self
 
-    def release(self, button):
+    def release(self, button: Button) -> "Command":
         self._buttons &= ~(1 << button)
         return self
 
-    def dpad(self, dpad):
+    def dpad(self, dpad: DPad) -> "Command":
         self._dpad = dpad
         return self
 
-    def stick_angle(self, angle):
+    def stick_angle(self, angle) -> "Command":
         self._stick_angle = angle
         return self
 
-    def stick_value(self, value):
+    def stick_value(self, value) -> "Command":
         self._stick_intensity = value
         return self
 
-    def left_angle(self, angle):
+    def left_angle(self, angle) -> "Command":
         return self.stick_angle(angle << LeftStick.SHIFT_BITS)
 
-    def right_angle(self, angle):
+    def right_angle(self, angle) -> "Command":
         return self.stick_angle(angle << RightStick.SHIFT_BITS)
 
-    def left_value(self, value):
+    def left_value(self, value) -> "Command":
         return self.stick_value(value << LeftStick.SHIFT_BITS)
 
-    def right_value(self, value):
+    def right_value(self, value) -> "Command":
         return self.stick_value(value << RightStick.SHIFT_BITS)
 
-    def sec(self, value):
-        self.time = value * 1000
-        return self
-
-    def msec(self, value):
+    def hold(self, value: int) -> "Command":
         self.time = value
-        return self
-
-    def wait(self, value):
-        self.wait_time = value * 1000
-        return self
-
-    def waitms(self, value):
-        self.wait_time = value
         return self
 
     def _translate_dpad(self):
@@ -151,7 +138,6 @@ class Command:
 class Controller:
     def __init__(self, output):
         self.output = output
-        self.last_command = Command()
 
     @staticmethod
     # Precision wait
@@ -175,34 +161,24 @@ class Controller:
         if command is None:
             command = Command()
 
-        bytes_written = 0
-
-        # If time duration is specified, set repeat duration
-        if command.time > 0:
+        if command.time is not None and command.time > 0:
             self.output.write(
                 ControllerRequest.UPDATE_REPORT_N_TIMES,
                 bytes(command.to_packet()) + math.ceil(command.time / 8).to_bytes(length=2, byteorder="little"),
             )
-            self.output.write(ControllerRequest.UPDATE_REPORT, bytes(self.last_command.to_packet()))
-            self.p_wait(command.time)
-            return
         else:
-            # Update the last command sent
-            self.last_command = command
+            self.output.write(ControllerRequest.UPDATE_REPORT, bytes(command.to_packet()))
 
-        bytes_written += self.output.write(ControllerRequest.UPDATE_REPORT, bytes(self.last_command.to_packet()))
-        if command.wait_time > 0:
-            self.p_wait(command.wait_time)
-        return bytes_written
-
-    def press_button(self, button: Button, hold_time: float = 0.2, wait_time: float = -1) -> "Controller":
-        if wait_time < 0:
-            wait_time = hold_time
-        self.send_cmd(Command().press(button).sec(hold_time).wait(wait_time))
+    def press_button(self, button: Button, hold_ms: int = 80, wait_ms: int = None) -> "Controller":
+        if wait_ms is None:
+            wait_ms = hold_ms
+        self.send_cmd(Command().press(button).hold(hold_ms))
+        self.send_cmd(Command().hold(wait_ms))
         return self
 
-    def press_dpad(self, dpad: DPad, hold_time: float = 0.2, wait_time: float = -1) -> "Controller":
-        if wait_time < 0:
-            wait_time = hold_time
-        self.send_cmd(Command().dpad(dpad).sec(hold_time).wait(wait_time))
+    def press_dpad(self, dpad: DPad, hold_ms: int = 80, wait_ms: int = None) -> "Controller":
+        if wait_ms is None:
+            wait_ms = hold_ms
+        self.send_cmd(Command().dpad(dpad).hold(hold_ms))
+        self.send_cmd(Command().hold(wait_ms))
         return self
