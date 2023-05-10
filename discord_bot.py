@@ -8,8 +8,8 @@ import os
 import discord
 from discord.ext import commands
 
-from chip_info_cog import ChipInfoCog
-from chip_trade_cog import ChipTradeCog
+from info_cog import InfoCog
+from trade_cog import TradeCog
 from trade_manager import TradeManager
 
 with open(os.path.join(os.path.dirname(__file__), "config.json"), "r") as f:
@@ -64,15 +64,15 @@ def main():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    request_queue = multiprocessing.SimpleQueue()
-    room_code_queue = multiprocessing.JoinableQueue()
+    request_queue = multiprocessing.Queue()
+    image_send_queue = multiprocessing.JoinableQueue()
     message_queue = multiprocessing.SimpleQueue()
 
-    trade_manager = TradeManager(request_queue, room_code_queue, message_queue)
+    trade_manager = TradeManager(request_queue, image_send_queue, message_queue)
     trade_manager.start_processing()
 
-    loop.run_until_complete(bot.add_cog(ChipTradeCog(bot, trade_manager)))
-    loop.run_until_complete(bot.add_cog(ChipInfoCog(bot)))
+    loop.run_until_complete(bot.add_cog(TradeCog(bot, trade_manager)))
+    loop.run_until_complete(bot.add_cog(InfoCog(bot)))
     bot.run(discord_config["client_secret"])
 
 

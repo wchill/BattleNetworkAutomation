@@ -1,22 +1,32 @@
 from __future__ import annotations
 
 import collections
+import logging
 import multiprocessing
 import pickle
 import queue
 import time
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from auto_trader import AutoTrader, DiscordContext, RoomCodeMessage, TradeResult
+from bn_automation import image_processing
 from bn_automation.controller import Controller
 from bn_automation.controller.sinks import SocketSink
 from chip import Chip
+from navicust_part import NaviCustPart
+
+logger = logging.getLogger(__name__)
 
 
 class MessageReaction(Enum):
     OK = "✅"
     ERROR = "❌"
+
+
+class ScreenCaptureMessage:
+    def __init__(self, image: bytes):
+        self.image = image
 
 
 class TradeCommand:
@@ -25,6 +35,7 @@ class TradeCommand:
     LIST_QUEUE = 3
     CLEAR_QUEUE = 4
     PAUSE_QUEUE = 5
+    SCREEN_CAPTURE = 6
 
     def __init__(self, command: int, discord_context: DiscordContext, **kwargs: Any):
         self.command = command
@@ -41,12 +52,12 @@ class TradeCommand:
 
 
 class RequestCommand(TradeCommand):
-    def __init__(self, discord_context: DiscordContext, chip: Chip):
-        super().__init__(command=TradeCommand.REQUEST_CHIP, discord_context=discord_context, chip=chip)
+    def __init__(self, discord_context: DiscordContext, trade_item: Union[Chip, NaviCustPart]):
+        super().__init__(command=TradeCommand.REQUEST_CHIP, discord_context=discord_context, trade_item=trade_item)
 
     @property
-    def chip(self) -> Chip:
-        return self.data["chip"]
+    def trade_item(self) -> Union[Chip, NaviCustPart]:
+        return self.data["trade_item"]
 
 
 class CancelCommand(TradeCommand):
@@ -69,6 +80,11 @@ class PauseQueueCommand(TradeCommand):
         super().__init__(command=TradeCommand.PAUSE_QUEUE, discord_context=discord_context)
 
 
+class ScreenCaptureCommand(TradeCommand):
+    def __init__(self, discord_context: DiscordContext):
+        super().__init__(command=TradeCommand.SCREEN_CAPTURE, discord_context=discord_context)
+
+
 class DiscordMessageReplyRequest:
     def __init__(self, discord_context: DiscordContext, message: Optional[str], reaction: Optional[MessageReaction]):
         self.discord_context = discord_context
@@ -79,26 +95,42 @@ class DiscordMessageReplyRequest:
 class UserTradeStats:
     def __init__(self, user_id: int):
         self.user_id = user_id
-        self.chips: Dict[Chip, int] = collections.defaultdict(int)
+        self.trades: Dict[Union[Chip, NaviCustPart], int] = collections.defaultdict(int)
+
+    def __setstate__(self, state):
+        if "chips" in state:
+            chips = state.pop("chips")
+            state["trades"] = chips
+        self.__dict__ = state
+
+    def __getstate__(self):
+        state = self.__dict__
+        if "chips" in state:
+            chips = state.pop("chips")
+            state["trades"] = chips
+        return state
 
     def add_trade(self, chip: Chip):
-        self.chips[chip] += 1
+        self.trades[chip] += 1
 
     def get_total_trade_count(self) -> int:
         total = 0
-        for qty in self.chips.values():
+        for qty in self.trades.values():
             total += qty
         return total
+
+    def get_trades_by_trade_count(self) -> List[Tuple[Chip, int]]:
+        return [(k, v) for k, v in sorted(self.trades.items(), key=lambda item: item[1], reverse=True)]
 
 
 class BotTradeStats:
     def __init__(self):
-        self.users = {}
+        self.users: Dict[int, UserTradeStats] = {}
 
-    def add_trade(self, user_id: int, chip: Chip):
+    def add_trade(self, user_id: int, trade_item: Union[Chip, NaviCustPart]):
         if user_id not in self.users:
             self.users[user_id] = UserTradeStats(user_id)
-        self.users[user_id].add_trade(chip)
+        self.users[user_id].add_trade(trade_item)
 
     def get_total_trade_count(self) -> int:
         total = 0
@@ -114,21 +146,21 @@ class BotTradeStats:
         sorted_users = sorted(all_users, key=lambda user: user.get_total_trade_count(), reverse=True)
         return sorted_users
 
-    def get_chips_by_trade_count(self) -> List[Tuple[Chip, int]]:
-        all_chips: Dict[Chip, int] = collections.defaultdict(int)
+    def get_trades_by_trade_count(self) -> List[Tuple[Chip, int]]:
+        all_items: Dict[Chip, int] = collections.defaultdict(int)
         for user in self.users.values():
-            for chip in user.chips:
-                all_chips[chip] += user.chips[chip]
+            for trade_item in user.trades:
+                all_items[trade_item] += user.trades[trade_item]
 
-        chip_tuples = [(chip, all_chips[chip]) for chip in all_chips]
-        return sorted(chip_tuples, key=lambda chip_tuple: chip_tuple[1], reverse=True)
+        item_tuples = [(item, all_items[item]) for item in all_items]
+        return sorted(item_tuples, key=lambda chip_tuple: chip_tuple[1], reverse=True)
 
 
 class TradeManager:
     def __init__(
         self,
-        request_queue: multiprocessing.SimpleQueue[TradeCommand],
-        room_code_queue: multiprocessing.JoinableQueue[RoomCodeMessage],
+        request_queue: multiprocessing.Queue[TradeCommand],
+        image_send_queue: multiprocessing.JoinableQueue[Union[RoomCodeMessage, ScreenCaptureMessage]],
         message_queue: multiprocessing.SimpleQueue[DiscordMessageReplyRequest],
     ):
         self._queue_lock = multiprocessing.RLock()
@@ -138,16 +170,22 @@ class TradeManager:
         self._current_userid = multiprocessing.Value("Q")
         self._cancel_trade_for_userid = multiprocessing.Value("Q")
         self._trade_cancelled = multiprocessing.Event()
+        self._screencap_requested = multiprocessing.Event()
+        self._screencap_requested.set()
 
         self.request_queue = request_queue
-        self.room_code_queue = room_code_queue
+        self.image_send_queue = image_send_queue
         self.message_queue = message_queue
 
+        self._bot_stats = self.bot_stats
+
+    @property
+    def bot_stats(self) -> BotTradeStats:
         try:
             with open("bot_stats.pkl", "rb") as f:
-                self.bot_stats = pickle.load(f)
+                return pickle.load(f)
         except Exception:
-            self.bot_stats = BotTradeStats()
+            return BotTradeStats()
 
     def start_processing(self):
         completion_recv, completion_send = multiprocessing.Pipe(duplex=False)
@@ -160,7 +198,7 @@ class TradeManager:
         ).start()
         multiprocessing.Process(
             target=self.process_trade_queue,
-            args=(self.room_code_queue, self.message_queue, completion_send, cancel_recv),
+            args=(self.image_send_queue, self.message_queue, completion_send, cancel_recv),
             daemon=True,
         ).start()
 
@@ -171,45 +209,52 @@ class TradeManager:
         cached_queue: Dict[int, RequestCommand],
         cancel_send: Any,
     ) -> None:
-        print(f"Cancelling trade for {command.user_name}")
+        logger.info(f"Cancelling trade for {command.user_name}")
 
+        cancelled_queue = False
         with self._queue_lock:
             try:
-                # If this succeeds, then we're not actively working on it
                 cached_queue.pop(command.user_id)
                 cancel_send.send(command.user_id)
 
-                message_queue.put(
-                    DiscordMessageReplyRequest(
-                        command.discord_context, "Successfully cancelled queued trade.", MessageReaction.OK
-                    )
-                )
-                return
+                cancelled_queue = True
+                logger.debug("Removed user request from queue")
             except KeyError:
-                # Two scenarios:
-                # 1. currently working on it
-                # 2. Might have just finished it
+                logger.debug("User request not in queue")
 
-                # If working on it, after waiting on the event, the userid is set to 0.
-                # If it was just finished, userid should still be set.
-                with self._cancel_trade_for_userid.get_lock():
-                    self._cancel_trade_for_userid.value = command.user_id
-                    self._trade_cancelled.clear()
-                self._trade_cancelled.wait()
+            # Two scenarios:
+            # 1. currently working on it
+            # 2. Might have just finished it
 
-                with self._cancel_trade_for_userid.get_lock():
-                    if self._cancel_trade_for_userid.value == 0:
-                        message_request = DiscordMessageReplyRequest(
-                            command.discord_context, "Successfully cancelled in-progress trade.", MessageReaction.OK
-                        )
-                    else:
-                        self._cancel_trade_for_userid.value = 0
-                        message_request = DiscordMessageReplyRequest(
-                            command.discord_context, "You don't have any queued trades.", MessageReaction.ERROR
-                        )
-                    self._trade_cancelled.clear()
+            # If working on it, after waiting on the event, the userid is set to 0.
+            # If it was just finished, userid should still be set.
+            with self._cancel_trade_for_userid.get_lock():
+                self._cancel_trade_for_userid.value = command.user_id
+                self._trade_cancelled.clear()
+            logger.debug("Waiting on trade cancelled event")
+            self._trade_cancelled.wait()
 
-                message_queue.put(message_request)
+            with self._cancel_trade_for_userid.get_lock():
+                if self._cancel_trade_for_userid.value == 0:
+                    logger.debug("User id value reset to 0, in-progress trade cancelled")
+                    message_request = DiscordMessageReplyRequest(
+                        command.discord_context, "Successfully cancelled in-progress trade.", MessageReaction.OK
+                    )
+                elif cancelled_queue:
+                    logger.debug("User id value not reset but request removed from queue")
+                    self._cancel_trade_for_userid.value = 0
+                    message_request = DiscordMessageReplyRequest(
+                        command.discord_context, "You don't have any queued trades.", MessageReaction.ERROR
+                    )
+                else:
+                    logger.debug("User id value not reset and no request in queue")
+                    self._cancel_trade_for_userid.value = 0
+                    message_request = DiscordMessageReplyRequest(
+                        command.discord_context, "Successfully cancelled queued trade.", MessageReaction.ERROR
+                    )
+                self._trade_cancelled.clear()
+
+            message_queue.put(message_request)
 
     def process_clear_queue_request(
         self,
@@ -219,11 +264,11 @@ class TradeManager:
         cancel_send: Any,
     ):
         with self._queue_lock:
-            for user_id, trade_request in cached_queue:
-                print(f"Removing request from queue: {trade_request.user_name} - {trade_request.chip}")
+            for user_id in cached_queue:
+                trade_request = cached_queue[user_id]
+                logger.debug(f"Removing request from queue: {trade_request.user_name} - {trade_request.trade_item}")
                 cancel_send.send(user_id)
         cached_queue.clear()
-        # message_queue.put(DiscordMessageReplyRequest(command.discord_context, "Successfully cleared queue", MessageReaction.OK))
         message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
 
     def process_trade_request(
@@ -238,22 +283,13 @@ class TradeManager:
                 message_queue.put(
                     DiscordMessageReplyRequest(
                         command.discord_context,
-                        f"You already have a pending request for `{request.chip.name} {request.chip.code}`",
+                        f"You already have a pending request for `{request.trade_item}`",
                         MessageReaction.ERROR,
                     )
                 )
             else:
                 cached_queue[command.user_id] = command
                 self._queued_trades.put(command)
-                """
-                message_queue.put(
-                    DiscordMessageReplyRequest(
-                        command.discord_context,
-                        f"Your request for `{command.chip.name} {command.chip.code}` has been added.",
-                        MessageReaction.OK
-                    )
-                )
-                """
                 message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
 
     def process_list_queue_request(
@@ -276,19 +312,17 @@ class TradeManager:
                     break
                 if current_userid == request.user_id:
                     lines.append(
-                        f"{count}. [IN PROGRESS] {request.user_name} ({request.user_id}) - {request.chip.name} {request.chip.code}"
+                        f"{count}. [IN PROGRESS] {request.user_name} ({request.user_id}) - {request.trade_item}"
                     )
                 else:
-                    lines.append(
-                        f"{count}. {request.user_name} ({request.user_id}) - {request.chip.name} {request.chip.code}"
-                    )
+                    lines.append(f"{count}. {request.user_name} ({request.user_id}) - {request.trade_item}")
             lines.append("```")
             lines.append(f"Total requests in queue: {len(cached_queue)}")
             message_queue.put(DiscordMessageReplyRequest(command.discord_context, "\n".join(lines), None))
 
     def process_commands(
         self,
-        request_queue: multiprocessing.SimpleQueue[TradeCommand],
+        request_queue: multiprocessing.Queue[TradeCommand],
         message_queue: multiprocessing.SimpleQueue[DiscordMessageReplyRequest],
         completion_recv: Any,
         cancel_send: Any,
@@ -306,39 +340,59 @@ class TradeManager:
 
         while True:
             try:
-                command = request_queue.get()
-
-                # Process all completion notifications and remove them from our cached copy of the queue
-                while completion_recv.poll():
-                    user_id = completion_recv.recv()
+                command = None
+                while command is None:
                     try:
-                        completed = cached_queue.pop(user_id)
-                        self.bot_stats.add_trade(user_id, completed.chip)
+                        command = request_queue.get(timeout=0.1)
+                    except queue.Empty:
+                        pass
 
-                        with open("bot_stats.pkl", "wb") as f:
-                            pickle.dump(self.bot_stats, f)
-                    except KeyError:
-                        raise RuntimeError(f"Tried to pop {user_id} from cached queue but it didn't exist!")
+                    # Process all completion notifications and remove them from our cached copy of the queue
+                    while completion_recv.poll():
+                        user_id = completion_recv.recv()
+                        try:
+                            completed = cached_queue.pop(user_id)
+                            print(f"Completed trade for {user_id}: {completed.trade_item}")
+                            self._bot_stats.add_trade(user_id, completed.trade_item)
+
+                            with open("bot_stats.pkl", "wb") as f:
+                                pickle.dump(self._bot_stats, f)
+                            with open("queue.pkl", "wb") as f:
+                                pickle.dump(cached_queue, f)
+                        except KeyError:
+                            print(f"Tried to pop {user_id} from cached queue but it didn't exist!")
 
                 if isinstance(command, CancelCommand):
                     self.process_cancellation(command, message_queue, cached_queue, cancel_send)
+                    with open("queue.pkl", "wb") as f:
+                        pickle.dump(cached_queue, f)
                 elif isinstance(command, RequestCommand):
                     self.process_trade_request(command, message_queue, cached_queue)
+                    with open("queue.pkl", "wb") as f:
+                        pickle.dump(cached_queue, f)
                 elif isinstance(command, ListQueueCommand):
                     self.process_list_queue_request(command, message_queue, cached_queue)
                 elif isinstance(command, ClearQueueCommand):
                     self.process_clear_queue_request(command, message_queue, cached_queue, cancel_send)
+                    with open("queue.pkl", "wb") as f:
+                        pickle.dump(cached_queue, f)
                 elif isinstance(command, PauseQueueCommand):
                     with self._queue_lock:
                         message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
-                        while not isinstance(request_queue.get(), PauseQueueCommand):
-                            pass
+                        with open("queue.pkl", "wb") as f:
+                            pickle.dump(cached_queue, f)
+                        command = request_queue.get()
+                        while not isinstance(command, PauseQueueCommand):
+                            command = request_queue.get()
                     message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
+                    with open("queue.pkl", "wb") as f:
+                        pickle.dump(cached_queue, f)
+                elif isinstance(command, ScreenCaptureCommand):
+                    self._screencap_requested.clear()
+                    self._screencap_requested.wait()
                 else:
                     raise RuntimeError(f"Unknown command: {command}")
 
-                with open("queue.pkl", "wb") as f:
-                    pickle.dump(cached_queue, f)
             except Exception:
                 import traceback
 
@@ -346,7 +400,7 @@ class TradeManager:
 
     def process_trade_queue(
         self,
-        room_code_queue: multiprocessing.JoinableQueue[RoomCodeMessage],
+        image_send_queue: multiprocessing.JoinableQueue[Union[RoomCodeMessage, ScreenCaptureMessage]],
         message_queue: multiprocessing.SimpleQueue[DiscordMessageReplyRequest],
         completion_send: Any,
         cancel_recv: Any,
@@ -364,6 +418,13 @@ class TradeManager:
                         # Receive all cancellation requests
                         while cancel_recv.poll():
                             cancelled_requests.add(cancel_recv.recv())
+
+                        # Get screen capture if requested
+                        if not self._screencap_requested.is_set():
+                            img = image_processing.convert_image_to_png_bytestring(image_processing.capture())
+                            image_send_queue.put(ScreenCaptureMessage(img))
+                            self._screencap_requested.set()
+
                         try:
                             with self._queue_lock, self._cancel_trade_for_userid.get_lock():
                                 current_trade = self._queued_trades.get_nowait()
@@ -376,18 +437,41 @@ class TradeManager:
 
                                 self._cancel_trade_for_userid.value = 0
                         except queue.Empty:
+                            # Keep the Switch awake
+                            trader.x()
                             time.sleep(0.1)
 
-                    self._current_userid.value = current_trade.discord_context.user_id
-                    result, message = trader.trade(
-                        current_trade.discord_context,
-                        current_trade.chip,
-                        self._cancel_trade_for_userid,
-                        self._trade_cancelled,
-                        room_code_queue,
-                    )
-                    if result != TradeResult.Success and result != TradeResult.Cancelled:
-                        message_queue.put(DiscordMessageReplyRequest(current_trade.discord_context, message, None))
+                    while True:
+                        self._current_userid.value = current_trade.discord_context.user_id
+                        if isinstance(current_trade.trade_item, Chip):
+                            result, message = trader.trade_chip(
+                                current_trade.discord_context,
+                                current_trade.trade_item,
+                                self._cancel_trade_for_userid,
+                                self._trade_cancelled,
+                                image_send_queue,
+                            )
+                        else:
+                            result, message = trader.trade_ncp(
+                                current_trade.discord_context,
+                                current_trade.trade_item,
+                                self._cancel_trade_for_userid,
+                                self._trade_cancelled,
+                                image_send_queue,
+                            )
+                        if result == TradeResult.UnexpectedState:
+                            message_with_inputs = (
+                                message + "\n\nLast inputs:\n```" + "\n".join(trader.get_last_inputs()) + "\n```"
+                            )
+                            message_queue.put(
+                                DiscordMessageReplyRequest(current_trade.discord_context, message_with_inputs, None)
+                            )
+                        elif result == TradeResult.CommunicationError:
+                            message_queue.put(DiscordMessageReplyRequest(current_trade.discord_context, message, None))
+                            continue
+                        elif result != TradeResult.Success and result != TradeResult.Cancelled:
+                            message_queue.put(DiscordMessageReplyRequest(current_trade.discord_context, message, None))
+                        break
 
                     # Notify the other worker thread of completion
                     self._current_userid.value = 0

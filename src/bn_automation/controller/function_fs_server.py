@@ -2,6 +2,7 @@ import collections
 import errno
 import getpass
 import inspect
+import logging
 import signal
 import socket
 import threading
@@ -21,6 +22,8 @@ from .raw_inputs import (
     RawRightStick,
     _RawDPad,
 )
+
+logger = logging.getLogger(__name__)
 
 """
 0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
@@ -394,6 +397,7 @@ class UsbHidDevice(functionfs.HIDFunction):
                     while True:
                         command = conn.recv(1)
                         if not command:
+                            print("Exiting loop because of EOF")
                             conn.close()
                             break
 

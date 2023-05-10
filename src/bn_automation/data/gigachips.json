@@ -7,7 +7,8 @@
     ],
     "mb": 95,
     "atk": 160,
-    "element": "Null"
+    "element": "Null",
+    "description": "A ring that hits 4 times"
   },
   {
     "id": "CF 002",
@@ -17,7 +18,8 @@
     ],
     "mb": 90,
     "atk": 100,
-    "element": "Break"
+    "element": "Break",
+    "description": "Meteors bombard from sky"
   },
   {
     "id": "CF 003",
@@ -27,7 +29,8 @@
     ],
     "mb": 93,
     "atk": 250,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cross-slice!"
   },
   {
     "id": "CF 004",
@@ -37,7 +40,8 @@
     ],
     "mb": 99,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Blend Hub DNA Data w/MegaMan"
   },
   {
     "id": "CF 005",
@@ -47,7 +51,8 @@
     ],
     "mb": 80,
     "atk": 0,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Use Bug Frag with DarkThnd!"
   },
   {
     "id": "CF ---",
@@ -57,7 +62,8 @@
     ],
     "mb": 99,
     "atk": 100,
-    "element": "Null"
+    "element": "Null",
+    "description": "Falzar's ruinous tornado!"
   },
   {
     "id": "CG 001",
@@ -67,7 +73,8 @@
     ],
     "mb": 95,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Buster rake wide enmy area"
   },
   {
     "id": "CG 002",
@@ -77,7 +84,8 @@
     ],
     "mb": 92,
     "atk": 240,
-    "element": "Break"
+    "element": "Break",
+    "description": "Hook atk 2 sq wide"
   },
   {
     "id": "CG 003",
@@ -86,8 +94,9 @@
       "Z"
     ],
     "mb": 82,
-    "atk": 250,
-    "element": "Sword"
+    "atk": 260,
+    "element": "Sword",
+    "description": "A button power up by 3 swrd"
   },
   {
     "id": "CG 004",
@@ -97,7 +106,8 @@
     ],
     "mb": 90,
     "atk": 30,
-    "element": "Null"
+    "element": "Null",
+    "description": "Smn Col. army in open pnls"
   },
   {
     "id": "CG 005",
@@ -107,7 +117,8 @@
     ],
     "mb": 80,
     "atk": 0,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Use Bug Frag with DrkSword!"
   },
   {
     "id": "CG ---",
@@ -117,6 +128,7 @@
     ],
     "mb": 99,
     "atk": 300,
-    "element": "Null"
+    "element": "Null",
+    "description": "Gregar's breath attack!"
   }
 ]

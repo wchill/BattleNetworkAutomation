@@ -8,7 +8,8 @@
     ],
     "mb": 20,
     "atk": 20,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attacks enmy, then heals you"
   },
   {
     "id": "002",
@@ -18,7 +19,8 @@
     ],
     "mb": 40,
     "atk": 40,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attacks enmy, then heals you"
   },
   {
     "id": "003",
@@ -28,7 +30,8 @@
     ],
     "mb": 60,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attacks enmy, then heals you"
   },
   {
     "id": "004",
@@ -39,7 +42,8 @@
     ],
     "mb": 41,
     "atk": 150,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Move in and slice the enemy"
   },
   {
     "id": "005",
@@ -49,7 +53,8 @@
     ],
     "mb": 53,
     "atk": 170,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Move in and slice the enemy"
   },
   {
     "id": "006",
@@ -59,7 +64,8 @@
     ],
     "mb": 68,
     "atk": 290,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Move in and slice the enemy"
   },
   {
     "id": "CG 007",
@@ -70,7 +76,8 @@
     ],
     "mb": 32,
     "atk": 100,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Burn with a radial fire attk"
   },
   {
     "id": "CG 008",
@@ -80,7 +87,8 @@
     ],
     "mb": 55,
     "atk": 130,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Burn with a radial fire attk"
   },
   {
     "id": "CG 009",
@@ -90,7 +98,8 @@
     ],
     "mb": 70,
     "atk": 260,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Burn with a radial fire attk"
   },
   {
     "id": "CG 010",
@@ -101,7 +110,8 @@
     ],
     "mb": 38,
     "atk": 120,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Attk your surrndns with thdr"
   },
   {
     "id": "CG 011",
@@ -111,7 +121,8 @@
     ],
     "mb": 52,
     "atk": 140,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Attk your surrndns with thdr"
   },
   {
     "id": "CG 012",
@@ -121,7 +132,8 @@
     ],
     "mb": 79,
     "atk": 210,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Attk your surrndns with thdr"
   },
   {
     "id": "CG 013",
@@ -132,7 +144,8 @@
     ],
     "mb": 42,
     "atk": 80,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Slash an enmy w/ flyn knfe"
   },
   {
     "id": "CG 014",
@@ -142,7 +155,8 @@
     ],
     "mb": 65,
     "atk": 100,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Slash an enmy w/ flyn knfe"
   },
   {
     "id": "CG 015",
@@ -152,7 +166,8 @@
     ],
     "mb": 79,
     "atk": 220,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Slash an enmy w/ flyn knfe"
   },
   {
     "id": "CG 016",
@@ -163,7 +178,8 @@
     ],
     "mb": 51,
     "atk": 120,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Press (A) for 3panl beam attk"
   },
   {
     "id": "CG 017",
@@ -173,7 +189,8 @@
     ],
     "mb": 65,
     "atk": 140,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Press (A) for 3panl beam attk"
   },
   {
     "id": "CG 018",
@@ -183,7 +200,8 @@
     ],
     "mb": 79,
     "atk": 210,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Press (A) for 3panl beam attk"
   },
   {
     "id": "CG 019",
@@ -194,7 +212,8 @@
     ],
     "mb": 42,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Rush fwd! Open panl hit TrCar"
   },
   {
     "id": "CG 020",
@@ -204,7 +223,8 @@
     ],
     "mb": 63,
     "atk": 70,
-    "element": "Null"
+    "element": "Null",
+    "description": "Rush fwd! Open panl hit TrCar"
   },
   {
     "id": "CG 021",
@@ -214,7 +234,8 @@
     ],
     "mb": 81,
     "atk": 130,
-    "element": "Null"
+    "element": "Null",
+    "description": "Rush fwd! Open panl hit TrCar"
   },
   {
     "id": "CF 007",
@@ -225,7 +246,8 @@
     ],
     "mb": 42,
     "atk": 50,
-    "element": "Water"
+    "element": "Water",
+    "description": "Watr atk! Bhnd 2row power-up"
   },
   {
     "id": "CF 008",
@@ -235,7 +257,8 @@
     ],
     "mb": 56,
     "atk": 60,
-    "element": "Water"
+    "element": "Water",
+    "description": "Watr atk! Bhnd 2row power-up"
   },
   {
     "id": "CF 009",
@@ -245,7 +268,8 @@
     ],
     "mb": 78,
     "atk": 120,
-    "element": "Water"
+    "element": "Water",
+    "description": "Watr atk! Bhnd 2row power-up"
   },
   {
     "id": "CF 010",
@@ -256,7 +280,8 @@
     ],
     "mb": 40,
     "atk": 140,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Slice 2sq side, 3sq vertical"
   },
   {
     "id": "CF 011",
@@ -266,7 +291,8 @@
     ],
     "mb": 60,
     "atk": 160,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Slice 2sq side, 3sq vertical"
   },
   {
     "id": "CF 012",
@@ -276,7 +302,8 @@
     ],
     "mb": 80,
     "atk": 280,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Slice 2sq side, 3sq vertical"
   },
   {
     "id": "CF 013",
@@ -287,7 +314,8 @@
     ],
     "mb": 43,
     "atk": 70,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Attk 2row from air, then side"
   },
   {
     "id": "CF 014",
@@ -297,7 +325,8 @@
     ],
     "mb": 61,
     "atk": 90,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Attk 2row from air, then side"
   },
   {
     "id": "CF 015",
@@ -307,7 +336,8 @@
     ],
     "mb": 74,
     "atk": 160,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Attk 2row from air, then side"
   },
   {
     "id": "CF 016",
@@ -318,7 +348,8 @@
     ],
     "mb": 41,
     "atk": 60,
-    "element": "Break"
+    "element": "Break",
+    "description": "Move fwrd then attk w/ drill"
   },
   {
     "id": "CF 017",
@@ -328,7 +359,8 @@
     ],
     "mb": 66,
     "atk": 70,
-    "element": "Break"
+    "element": "Break",
+    "description": "Move fwrd then attk w/ drill"
   },
   {
     "id": "CF 018",
@@ -338,7 +370,8 @@
     ],
     "mb": 85,
     "atk": 130,
-    "element": "Break"
+    "element": "Break",
+    "description": "Move fwrd then attk w/ drill"
   },
   {
     "id": "CF 019",
@@ -349,7 +382,8 @@
     ],
     "mb": 39,
     "atk": 110,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attk ahd. Suck in & shoot out"
   },
   {
     "id": "CF 020",
@@ -359,7 +393,8 @@
     ],
     "mb": 56,
     "atk": 130,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attk ahd. Suck in & shoot out"
   },
   {
     "id": "CF 021",
@@ -369,7 +404,8 @@
     ],
     "mb": 74,
     "atk": 200,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attk ahd. Suck in & shoot out"
   },
   {
     "id": "022",
@@ -380,7 +416,8 @@
     ],
     "mb": 30,
     "atk": 120,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Head fwd & launch blst attk"
   },
   {
     "id": "023",
@@ -390,7 +427,8 @@
     ],
     "mb": 49,
     "atk": 140,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Head fwd & launch blst attk"
   },
   {
     "id": "024",
@@ -400,7 +438,8 @@
     ],
     "mb": 68,
     "atk": 250,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Head fwd & launch blst attk"
   },
   {
     "id": "025",
@@ -411,7 +450,8 @@
     ],
     "mb": 45,
     "atk": 130,
-    "element": "Water"
+    "element": "Water",
+    "description": "Snd giant wave acrs area 2pnl"
   },
   {
     "id": "026",
@@ -421,7 +461,8 @@
     ],
     "mb": 60,
     "atk": 150,
-    "element": "Water"
+    "element": "Water",
+    "description": "Snd giant wave acrs area 2pnl"
   },
   {
     "id": "027",
@@ -431,7 +472,8 @@
     ],
     "mb": 75,
     "atk": 270,
-    "element": "Water"
+    "element": "Water",
+    "description": "Snd giant wave acrs area 2pnl"
   },
   {
     "id": "028",
@@ -442,7 +484,8 @@
     ],
     "mb": 42,
     "atk": 20,
-    "element": "Null"
+    "element": "Null",
+    "description": "Capture enmy in a ash attck"
   },
   {
     "id": "029",
@@ -452,7 +495,8 @@
     ],
     "mb": 64,
     "atk": 25,
-    "element": "Null"
+    "element": "Null",
+    "description": "Capture enmy in a ash attck"
   },
   {
     "id": "030",
@@ -462,7 +506,8 @@
     ],
     "mb": 86,
     "atk": 55,
-    "element": "Null"
+    "element": "Null",
+    "description": "Capture enmy in a ash attck"
   },
   {
     "id": "031",
@@ -473,7 +518,8 @@
     ],
     "mb": 52,
     "atk": 100,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Whip 3 panels forward"
   },
   {
     "id": "032",
@@ -483,7 +529,8 @@
     ],
     "mb": 62,
     "atk": 120,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Whip 3 panels forward"
   },
   {
     "id": "033",
@@ -493,7 +540,8 @@
     ],
     "mb": 72,
     "atk": 190,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Whip 3 panels forward"
   },
   {
     "id": "034",
@@ -504,7 +552,8 @@
     ],
     "mb": 50,
     "atk": 100,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hit (A) whn col chges elem attk"
   },
   {
     "id": "035",
@@ -514,7 +563,8 @@
     ],
     "mb": 53,
     "atk": 120,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hit (A) whn col chges elem attk"
   },
   {
     "id": "036",
@@ -524,7 +574,8 @@
     ],
     "mb": 66,
     "atk": 240,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hit (A) whn col chges elem attk"
   },
   {
     "id": "037",
@@ -535,7 +586,8 @@
     ],
     "mb": 45,
     "atk": 160,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cut enmy lines in Z shape"
   },
   {
     "id": "038",
@@ -545,7 +597,8 @@
     ],
     "mb": 70,
     "atk": 180,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cut enmy lines in Z shape"
   },
   {
     "id": "039",
@@ -555,17 +608,20 @@
     ],
     "mb": 91,
     "atk": 300,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cut enmy lines in Z shape"
   },
   {
     "id": "040",
     "name": "Count",
     "codes": [
-      "H", "*"
+      "H",
+      "*"
     ],
     "mb": 60,
     "atk": 20,
-    "element": "Null"
+    "element": "Null",
+    "description": "Rain on enmy then lance atk"
   },
   {
     "id": "041",
@@ -575,7 +631,8 @@
     ],
     "mb": 75,
     "atk": 25,
-    "element": "Null"
+    "element": "Null",
+    "description": "Rain on enmy then lance atk"
   },
   {
     "id": "042",
@@ -585,7 +642,8 @@
     ],
     "mb": 89,
     "atk": 50,
-    "element": "Null"
+    "element": "Null",
+    "description": "Rain on enmy then lance atk"
   },
   {
     "id": "043",
@@ -596,7 +654,8 @@
     ],
     "mb": 30,
     "atk": 130,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hit enmy with bike rdng Djgo"
   },
   {
     "id": "044",
@@ -606,7 +665,8 @@
     ],
     "mb": 70,
     "atk": 180,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hit enmy with bike rdng Djgo"
   },
   {
     "id": "045",
@@ -616,7 +676,8 @@
     ],
     "mb": 90,
     "atk": 260,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hit enmy with bike rdng Djgo"
   },
   {
     "id": "---",
@@ -626,6 +687,7 @@
     ],
     "mb": 99,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Ferocious beast power!"
   }
 ]

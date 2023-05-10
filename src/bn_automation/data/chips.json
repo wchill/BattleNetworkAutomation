@@ -10,7 +10,8 @@
     ],
     "mb": 6,
     "atk": 40,
-    "element": "Null"
+    "element": "Null",
+    "description": "Cannon attack to 1 enemy"
   },
   {
     "id": "002",
@@ -23,7 +24,8 @@
     ],
     "mb": 24,
     "atk": 100,
-    "element": "Null"
+    "element": "Null",
+    "description": "Cannon attack to 1 enemy"
   },
   {
     "id": "003",
@@ -36,7 +38,8 @@
     ],
     "mb": 38,
     "atk": 180,
-    "element": "Null"
+    "element": "Null",
+    "description": "Cannon attack to 1 enemy"
   },
   {
     "id": "004",
@@ -46,7 +49,8 @@
     ],
     "mb": 4,
     "atk": 20,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Knock enmy back 1 square"
   },
   {
     "id": "005",
@@ -59,7 +63,8 @@
     ],
     "mb": 5,
     "atk": 10,
-    "element": "Null"
+    "element": "Null",
+    "description": "3-shot to pierce 1 panel!"
   },
   {
     "id": "006",
@@ -71,7 +76,8 @@
     ],
     "mb": 18,
     "atk": 15,
-    "element": "Null"
+    "element": "Null",
+    "description": "4-shot to pierce 1 panel!"
   },
   {
     "id": "007",
@@ -83,7 +89,8 @@
     ],
     "mb": 30,
     "atk": 20,
-    "element": "Null"
+    "element": "Null",
+    "description": "5-shot to pierce 1 panel!"
   },
   {
     "id": "008",
@@ -93,7 +100,8 @@
     ],
     "mb": 75,
     "atk": 20,
-    "element": "Null"
+    "element": "Null",
+    "description": "10-shot vulcan cannon!"
   },
   {
     "id": "009",
@@ -106,7 +114,8 @@
     ],
     "mb": 10,
     "atk": 30,
-    "element": "Null"
+    "element": "Null",
+    "description": "Spreads damg to adj panels"
   },
   {
     "id": "010",
@@ -119,7 +128,8 @@
     ],
     "mb": 18,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Spreads damg to adj panels"
   },
   {
     "id": "011",
@@ -132,7 +142,8 @@
     ],
     "mb": 26,
     "atk": 90,
-    "element": "Null"
+    "element": "Null",
+    "description": "Spreads damg to adj panels"
   },
   {
     "id": "012",
@@ -144,7 +155,8 @@
     ],
     "mb": 17,
     "atk": 120,
-    "element": "Null"
+    "element": "Null",
+    "description": "3sqr blst if hits end row"
   },
   {
     "id": "013",
@@ -156,7 +168,8 @@
     ],
     "mb": 28,
     "atk": 160,
-    "element": "Null"
+    "element": "Null",
+    "description": "3sqr blst if hits end row"
   },
   {
     "id": "014",
@@ -168,7 +181,8 @@
     ],
     "mb": 39,
     "atk": 200,
-    "element": "Null"
+    "element": "Null",
+    "description": "3sqr blst if hits end row"
   },
   {
     "id": "015",
@@ -181,7 +195,8 @@
     ],
     "mb": 15,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hits row 2pnl ahd w/sunshne"
   },
   {
     "id": "016",
@@ -193,7 +208,8 @@
     ],
     "mb": 30,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hits row 2pnl ahd w/sunshne"
   },
   {
     "id": "017",
@@ -205,7 +221,8 @@
     ],
     "mb": 38,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Hits row 2pnl ahd w/sunshne"
   },
   {
     "id": "018",
@@ -218,7 +235,8 @@
     ],
     "mb": 32,
     "atk": 50,
-    "element": "Null"
+    "element": "Null",
+    "description": "YoYo atk reaches 3sq ahead"
   },
   {
     "id": "019",
@@ -231,7 +249,8 @@
     ],
     "mb": 8,
     "atk": 70,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Crcks 3 sqrs ahd with fire"
   },
   {
     "id": "020",
@@ -243,7 +262,8 @@
     ],
     "mb": 21,
     "atk": 110,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Crcks 3 sqrs ahd with fire"
   },
   {
     "id": "021",
@@ -255,7 +275,8 @@
     ],
     "mb": 34,
     "atk": 150,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Crcks 3 sqrs ahd with fire"
   },
   {
     "id": "022",
@@ -267,7 +288,8 @@
     ],
     "mb": 34,
     "atk": 100,
-    "element": "Water"
+    "element": "Water",
+    "description": "Fires 3sq shotgun blast!"
   },
   {
     "id": "023",
@@ -279,7 +301,8 @@
     ],
     "mb": 30,
     "atk": 30,
-    "element": "Water"
+    "element": "Water",
+    "description": "Hits enmy w/arrow. Use dstnc"
   },
   {
     "id": "024",
@@ -291,7 +314,8 @@
     ],
     "mb": 36,
     "atk": 40,
-    "element": "Water"
+    "element": "Water",
+    "description": "Hits enmy w/arrow. Use dstnc"
   },
   {
     "id": "025",
@@ -303,7 +327,8 @@
     ],
     "mb": 42,
     "atk": 50,
-    "element": "Water"
+    "element": "Water",
+    "description": "Hits enmy w/arrow. Use dstnc"
   },
   {
     "id": "026",
@@ -315,7 +340,8 @@
     ],
     "mb": 30,
     "atk": 60,
-    "element": "Water"
+    "element": "Water",
+    "description": "Seals an enemy in a bubble."
   },
   {
     "id": "027",
@@ -327,7 +353,8 @@
     ],
     "mb": 38,
     "atk": 80,
-    "element": "Water"
+    "element": "Water",
+    "description": "Seals an enemy in a bubble."
   },
   {
     "id": "028",
@@ -339,7 +366,8 @@
     ],
     "mb": 46,
     "atk": 100,
-    "element": "Water"
+    "element": "Water",
+    "description": "Seals an enemy in a bubble."
   },
   {
     "id": "029",
@@ -352,7 +380,8 @@
     ],
     "mb": 7,
     "atk": 40,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Pralyzing electric attack!"
   },
   {
     "id": "030",
@@ -364,7 +393,8 @@
     ],
     "mb": 24,
     "atk": 120,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "A piercng thunder attack!"
   },
   {
     "id": "031",
@@ -376,7 +406,8 @@
     ],
     "mb": 31,
     "atk": 150,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "A piercng thunder attack!"
   },
   {
     "id": "032",
@@ -388,7 +419,8 @@
     ],
     "mb": 38,
     "atk": 180,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "A piercng thunder attack!"
   },
   {
     "id": "033",
@@ -400,7 +432,8 @@
     ],
     "mb": 32,
     "atk": 100,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Sprd elec puls that paralyzes"
   },
   {
     "id": "034",
@@ -412,7 +445,8 @@
     ],
     "mb": 36,
     "atk": 120,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Sprd elec pulse. Pul enemy in."
   },
   {
     "id": "035",
@@ -424,7 +458,8 @@
     ],
     "mb": 40,
     "atk": 140,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Sprd elec puls. Hit w/HP bug."
   },
   {
     "id": "036",
@@ -436,7 +471,8 @@
     ],
     "mb": 14,
     "atk": 50,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Damages enemies w/corn"
   },
   {
     "id": "037",
@@ -448,7 +484,8 @@
     ],
     "mb": 26,
     "atk": 60,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Damages enemies w/corn"
   },
   {
     "id": "038",
@@ -460,7 +497,8 @@
     ],
     "mb": 38,
     "atk": 70,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Damages enemies w/corn"
   },
   {
     "id": "039",
@@ -472,7 +510,8 @@
     ],
     "mb": 21,
     "atk": 10,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Bees attk whle hive defending"
   },
   {
     "id": "040",
@@ -484,7 +523,8 @@
     ],
     "mb": 28,
     "atk": 15,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Bees attk whle hive defending"
   },
   {
     "id": "041",
@@ -496,7 +536,8 @@
     ],
     "mb": 35,
     "atk": 20,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Bees attk whle hive defending"
   },
   {
     "id": "042",
@@ -508,7 +549,8 @@
     ],
     "mb": 14,
     "atk": 50,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Send out 2 logs 2pnl fwd"
   },
   {
     "id": "043",
@@ -520,7 +562,8 @@
     ],
     "mb": 26,
     "atk": 70,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Send out 2 logs 2pnl fwd"
   },
   {
     "id": "044",
@@ -532,7 +575,8 @@
     ],
     "mb": 38,
     "atk": 90,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Send out 2 logs 2pnl fwd"
   },
   {
     "id": "045",
@@ -544,7 +588,8 @@
     ],
     "mb": 13,
     "atk": 70,
-    "element": "Break"
+    "element": "Break",
+    "description": "Fire off piercing shell."
   },
   {
     "id": "046",
@@ -556,7 +601,8 @@
     ],
     "mb": 20,
     "atk": 100,
-    "element": "Break"
+    "element": "Break",
+    "description": "Fire off piercing shell."
   },
   {
     "id": "047",
@@ -568,7 +614,8 @@
     ],
     "mb": 27,
     "atk": 130,
-    "element": "Break"
+    "element": "Break",
+    "description": "Fire off piercing shell."
   },
   {
     "id": "048",
@@ -580,7 +627,8 @@
     ],
     "mb": 25,
     "atk": 130,
-    "element": "Break"
+    "element": "Break",
+    "description": "A flying head with 2spc tail"
   },
   {
     "id": "049",
@@ -592,7 +640,8 @@
     ],
     "mb": 33,
     "atk": 150,
-    "element": "Break"
+    "element": "Break",
+    "description": "A flying head with 2spc tail"
   },
   {
     "id": "050",
@@ -604,7 +653,8 @@
     ],
     "mb": 39,
     "atk": 170,
-    "element": "Break"
+    "element": "Break",
+    "description": "A flying head with 2spc tail"
   },
   {
     "id": "051",
@@ -616,7 +666,8 @@
     ],
     "mb": 19,
     "atk": 60,
-    "element": "Break"
+    "element": "Break",
+    "description": "Bounce the puck off walls"
   },
   {
     "id": "052",
@@ -628,7 +679,8 @@
     ],
     "mb": 32,
     "atk": 70,
-    "element": "Break"
+    "element": "Break",
+    "description": "Knocks enmy 2sq away"
   },
   {
     "id": "053",
@@ -640,7 +692,8 @@
     ],
     "mb": 16,
     "atk": 20,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "8hit strm 2 squares ahead"
   },
   {
     "id": "054",
@@ -652,7 +705,8 @@
     ],
     "mb": 30,
     "atk": 20,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "A static blast 2sq ahead"
   },
   {
     "id": "055",
@@ -665,7 +719,8 @@
     ],
     "mb": 12,
     "atk": 30,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Fire 9sts at row w/clst enmy"
   },
   {
     "id": "056",
@@ -677,7 +732,8 @@
     ],
     "mb": 24,
     "atk": 50,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Fire 9sts at row w/clst enmy"
   },
   {
     "id": "057",
@@ -689,7 +745,8 @@
     ],
     "mb": 36,
     "atk": 70,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Fire 9sts at row w/clst enmy"
   },
   {
     "id": "058",
@@ -702,7 +759,8 @@
     ],
     "mb": 6,
     "atk": 50,
-    "element": "Null"
+    "element": "Null",
+    "description": "Throws a MiniBomb 3sq ahead"
   },
   {
     "id": "059",
@@ -714,7 +772,8 @@
     ],
     "mb": 32,
     "atk": 140,
-    "element": "Null"
+    "element": "Null",
+    "description": "Throws a 9 panl bomb 3panl fwd"
   },
   {
     "id": "060",
@@ -727,7 +786,8 @@
     ],
     "mb": 11,
     "atk": 40,
-    "element": "Null"
+    "element": "Null",
+    "description": "Throws a bomb 3sq ahead"
   },
   {
     "id": "061",
@@ -740,7 +800,8 @@
     ],
     "mb": 27,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Throws a bomb 3sq ahead"
   },
   {
     "id": "062",
@@ -753,7 +814,8 @@
     ],
     "mb": 30,
     "atk": 40,
-    "element": "Null"
+    "element": "Null",
+    "description": "Thrw dlyd stun bomb 3sq fwd"
   },
   {
     "id": "063",
@@ -765,7 +827,8 @@
     ],
     "mb": 34,
     "atk": 70,
-    "element": "Null"
+    "element": "Null",
+    "description": "Thrw dlyd stun bomb 3sq fwd"
   },
   {
     "id": "064",
@@ -777,7 +840,8 @@
     ],
     "mb": 38,
     "atk": 100,
-    "element": "Null"
+    "element": "Null",
+    "description": "Thrw dlyd stun bomb 3sq fwd"
   },
   {
     "id": "065",
@@ -789,7 +853,8 @@
     ],
     "mb": 32,
     "atk": 250,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Thrw shel 3sqr fwd. Fire attk"
   },
   {
     "id": "066",
@@ -801,7 +866,8 @@
     ],
     "mb": 24,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Throws a BugBomb 3sq ahead"
   },
   {
     "id": "067",
@@ -814,7 +880,8 @@
     ],
     "mb": 19,
     "atk": 0,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Makes 9sq meadow 3sq ahead"
   },
   {
     "id": "068",
@@ -827,7 +894,8 @@
     ],
     "mb": 31,
     "atk": 0,
-    "element": "Water"
+    "element": "Water",
+    "description": "Makes 9sq ice field 3sq ahead"
   },
   {
     "id": "069",
@@ -840,7 +908,8 @@
     ],
     "mb": 37,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Makes 9sq poisn swp 3sq ahead"
   },
   {
     "id": "070",
@@ -853,7 +922,8 @@
     ],
     "mb": 8,
     "atk": 80,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cuts enmy in front! Range: 1"
   },
   {
     "id": "071",
@@ -866,7 +936,8 @@
     ],
     "mb": 12,
     "atk": 80,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cuts enmy in front! Range: 3"
   },
   {
     "id": "072",
@@ -879,7 +950,8 @@
     ],
     "mb": 25,
     "atk": 100,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cuts enmy in front! Range: 2"
   },
   {
     "id": "073",
@@ -891,7 +963,8 @@
     ],
     "mb": 38,
     "atk": 150,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cuts enmy in front! Range: 3"
   },
   {
     "id": "074",
@@ -903,7 +976,8 @@
     ],
     "mb": 38,
     "atk": 150,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Cuts enmy in front! Range: 2"
   },
   {
     "id": "075",
@@ -915,7 +989,8 @@
     ],
     "mb": 30,
     "atk": 140,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Cut enmy 3sq fwrd w/fire"
   },
   {
     "id": "076",
@@ -927,7 +1002,8 @@
     ],
     "mb": 32,
     "atk": 160,
-    "element": "Water"
+    "element": "Water",
+    "description": "Cut enmy 3sq fwrd w/aqua"
   },
   {
     "id": "077",
@@ -939,7 +1015,8 @@
     ],
     "mb": 35,
     "atk": 120,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Cut enmy 3sq fwrd w/elec"
   },
   {
     "id": "078",
@@ -951,7 +1028,8 @@
     ],
     "mb": 34,
     "atk": 150,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Cut enmy 3sq fwrd w/wood"
   },
   {
     "id": "079",
@@ -964,7 +1042,8 @@
     ],
     "mb": 19,
     "atk": 140,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Blow enmy in front! Range: 3"
   },
   {
     "id": "080",
@@ -976,7 +1055,8 @@
     ],
     "mb": 28,
     "atk": 160,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Use WideSwrd 2sq ahead"
   },
   {
     "id": "081",
@@ -988,7 +1068,8 @@
     ],
     "mb": 28,
     "atk": 160,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "A magical shifting sword."
   },
   {
     "id": "082",
@@ -998,7 +1079,8 @@
     ],
     "mb": 52,
     "atk": 220,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "A magical shifting sword."
   },
   {
     "id": "083",
@@ -1010,7 +1092,8 @@
     ],
     "mb": 35,
     "atk": 130,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Slices enemies around"
   },
   {
     "id": "084",
@@ -1020,7 +1103,8 @@
     ],
     "mb": 77,
     "atk": 1,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Atk power equals amt of lostHP"
   },
   {
     "id": "085",
@@ -1032,7 +1116,8 @@
     ],
     "mb": 37,
     "atk": 200,
-    "element": "Null"
+    "element": "Null",
+    "description": "Search and hit stund enemies."
   },
   {
     "id": "086",
@@ -1044,7 +1129,8 @@
     ],
     "mb": 43,
     "atk": 220,
-    "element": "Null"
+    "element": "Null",
+    "description": "Cuts enmy on grass, ice, fire"
   },
   {
     "id": "087",
@@ -1056,7 +1142,8 @@
     ],
     "mb": 50,
     "atk": 240,
-    "element": "Null"
+    "element": "Null",
+    "description": "When plyz cut enemy spec panl"
   },
   {
     "id": "088",
@@ -1069,7 +1156,8 @@
     ],
     "mb": 4,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Shoot a panel at an enemy!"
   },
   {
     "id": "089",
@@ -1082,7 +1170,8 @@
     ],
     "mb": 8,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Shoot 2 panels at an enemy!"
   },
   {
     "id": "090",
@@ -1095,7 +1184,8 @@
     ],
     "mb": 12,
     "atk": 100,
-    "element": "Null"
+    "element": "Null",
+    "description": "Shoot 3 panels at an enemy!"
   },
   {
     "id": "091",
@@ -1108,7 +1198,8 @@
     ],
     "mb": 7,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Bounce an attk back at them!"
   },
   {
     "id": "092",
@@ -1121,7 +1212,8 @@
     ],
     "mb": 16,
     "atk": 120,
-    "element": "Null"
+    "element": "Null",
+    "description": "Bounce an attk back at them!"
   },
   {
     "id": "093",
@@ -1134,7 +1226,8 @@
     ],
     "mb": 25,
     "atk": 200,
-    "element": "Null"
+    "element": "Null",
+    "description": "Bounce an attk back at them!"
   },
   {
     "id": "094",
@@ -1146,7 +1239,8 @@
     ],
     "mb": 15,
     "atk": 80,
-    "element": "Null"
+    "element": "Null",
+    "description": "Fllw enemy and fire trap wave"
   },
   {
     "id": "095",
@@ -1158,7 +1252,8 @@
     ],
     "mb": 22,
     "atk": 120,
-    "element": "Null"
+    "element": "Null",
+    "description": "Fllw enemy and fire trap wave"
   },
   {
     "id": "096",
@@ -1170,7 +1265,8 @@
     ],
     "mb": 29,
     "atk": 160,
-    "element": "Null"
+    "element": "Null",
+    "description": "Fllw enemy and fire trap wave"
   },
   {
     "id": "097",
@@ -1182,7 +1278,8 @@
     ],
     "mb": 30,
     "atk": 130,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attk enmy from rear w/snakarm"
   },
   {
     "id": "098",
@@ -1194,7 +1291,8 @@
     ],
     "mb": 34,
     "atk": 150,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attk enmy from rear w/snakarm"
   },
   {
     "id": "099",
@@ -1206,7 +1304,8 @@
     ],
     "mb": 38,
     "atk": 170,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attk enmy from rear w/snakarm"
   },
   {
     "id": "100",
@@ -1218,7 +1317,8 @@
     ],
     "mb": 30,
     "atk": 160,
-    "element": "Null"
+    "element": "Null",
+    "description": "Summon a Nghtmare attack!"
   },
   {
     "id": "101",
@@ -1230,7 +1330,8 @@
     ],
     "mb": 40,
     "atk": 200,
-    "element": "Null"
+    "element": "Null",
+    "description": "Summon a Nghtmare attack!"
   },
   {
     "id": "102",
@@ -1242,7 +1343,8 @@
     ],
     "mb": 46,
     "atk": 260,
-    "element": "Null"
+    "element": "Null",
+    "description": "Summon a Nghtmare attack!"
   },
   {
     "id": "103",
@@ -1254,7 +1356,8 @@
     ],
     "mb": 34,
     "atk": 30,
-    "element": "Null"
+    "element": "Null",
+    "description": "Call snke from hole in area."
   },
   {
     "id": "104",
@@ -1264,7 +1367,8 @@
     ],
     "mb": 69,
     "atk": 1,
-    "element": "Null"
+    "element": "Null",
+    "description": "Last 2 HP digits = atk pwr"
   },
   {
     "id": "105",
@@ -1276,7 +1380,8 @@
     ],
     "mb": 12,
     "atk": 60,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Slams closest enemy"
   },
   {
     "id": "106",
@@ -1288,7 +1393,8 @@
     ],
     "mb": 22,
     "atk": 120,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Slams closest enemy"
   },
   {
     "id": "107",
@@ -1300,7 +1406,8 @@
     ],
     "mb": 32,
     "atk": 180,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Slams closest enemy"
   },
   {
     "id": "108",
@@ -1312,7 +1419,8 @@
     ],
     "mb": 24,
     "atk": 100,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Press A to burn a 4pnl sqr"
   },
   {
     "id": "109",
@@ -1324,7 +1432,8 @@
     ],
     "mb": 30,
     "atk": 120,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Press A to burn a 4pnl sqr"
   },
   {
     "id": "110",
@@ -1336,7 +1445,8 @@
     ],
     "mb": 36,
     "atk": 140,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Press A to burn a 4pnl sqr"
   },
   {
     "id": "111",
@@ -1346,7 +1456,8 @@
     ],
     "mb": 73,
     "atk": 40,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Drop many meteor on enmy area"
   },
   {
     "id": "112",
@@ -1358,7 +1469,8 @@
     ],
     "mb": 31,
     "atk": 40,
-    "element": "Water"
+    "element": "Water",
+    "description": "Target 3 needles at enemy!"
   },
   {
     "id": "113",
@@ -1370,7 +1482,8 @@
     ],
     "mb": 35,
     "atk": 60,
-    "element": "Water"
+    "element": "Water",
+    "description": "Target 3 needles at enemy!"
   },
   {
     "id": "114",
@@ -1382,7 +1495,8 @@
     ],
     "mb": 39,
     "atk": 80,
-    "element": "Water"
+    "element": "Water",
+    "description": "Target 3 needles at enemy!"
   },
   {
     "id": "115",
@@ -1394,7 +1508,8 @@
     ],
     "mb": 39,
     "atk": 150,
-    "element": "Water"
+    "element": "Water",
+    "description": "Launch a giant snowball"
   },
   {
     "id": "116",
@@ -1406,7 +1521,8 @@
     ],
     "mb": 32,
     "atk": 100,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Hit enmy with beam from snsr"
   },
   {
     "id": "117",
@@ -1418,7 +1534,8 @@
     ],
     "mb": 35,
     "atk": 130,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Hit enmy with beam from snsr"
   },
   {
     "id": "118",
@@ -1430,7 +1547,8 @@
     ],
     "mb": 38,
     "atk": 160,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Hit enmy with beam from snsr"
   },
   {
     "id": "119",
@@ -1442,7 +1560,8 @@
     ],
     "mb": 16,
     "atk": 100,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Boomerang that circ btl field"
   },
   {
     "id": "120",
@@ -1454,7 +1573,8 @@
     ],
     "mb": 26,
     "atk": 140,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Boomerang that circ btl field"
   },
   {
     "id": "121",
@@ -1466,7 +1586,8 @@
     ],
     "mb": 36,
     "atk": 170,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Boomerang that circ btl field"
   },
   {
     "id": "122",
@@ -1479,7 +1600,8 @@
     ],
     "mb": 42,
     "atk": 150,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Lance through back line"
   },
   {
     "id": "123",
@@ -1491,7 +1613,8 @@
     ],
     "mb": 40,
     "atk": 140,
-    "element": "Fire"
+    "element": "Fire",
+    "description": "Drgn near clst enmy Hit 2 rows"
   },
   {
     "id": "124",
@@ -1503,7 +1626,8 @@
     ],
     "mb": 40,
     "atk": 150,
-    "element": "Elec"
+    "element": "Elec",
+    "description": "Drgn near clst enmy Hit 2 rows"
   },
   {
     "id": "125",
@@ -1515,7 +1639,8 @@
     ],
     "mb": 44,
     "atk": 120,
-    "element": "Water"
+    "element": "Water",
+    "description": "Drgn near clst enmy Hit 2 rows"
   },
   {
     "id": "126",
@@ -1527,7 +1652,8 @@
     ],
     "mb": 48,
     "atk": 130,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Drgn near clst enmy Hit 2 rows"
   },
   {
     "id": "127",
@@ -1539,7 +1665,8 @@
     ],
     "mb": 17,
     "atk": 140,
-    "element": "Break"
+    "element": "Break",
+    "description": "Hit 3pnl area arnd clst enmy"
   },
   {
     "id": "128",
@@ -1551,7 +1678,8 @@
     ],
     "mb": 27,
     "atk": 190,
-    "element": "Break"
+    "element": "Break",
+    "description": "Hit 3pnl area arnd clst enmy"
   },
   {
     "id": "129",
@@ -1563,7 +1691,8 @@
     ],
     "mb": 37,
     "atk": 250,
-    "element": "Break"
+    "element": "Break",
+    "description": "Hit 3pnl area arnd clst enmy"
   },
   {
     "id": "130",
@@ -1573,7 +1702,8 @@
     ],
     "mb": 90,
     "atk": 220,
-    "element": "Break"
+    "element": "Break",
+    "description": "Fist Atk on center panel"
   },
   {
     "id": "131",
@@ -1585,7 +1715,8 @@
     ],
     "mb": 22,
     "atk": 50,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Spits out hurricane attack"
   },
   {
     "id": "132",
@@ -1597,7 +1728,8 @@
     ],
     "mb": 29,
     "atk": 50,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Spits out hurricane attack"
   },
   {
     "id": "133",
@@ -1609,7 +1741,8 @@
     ],
     "mb": 36,
     "atk": 50,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Spits out hurricane attack"
   },
   {
     "id": "134",
@@ -1619,7 +1752,8 @@
     ],
     "mb": 10,
     "atk": 0,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "Windbox blows at enmy area"
   },
   {
     "id": "135",
@@ -1629,7 +1763,8 @@
     ],
     "mb": 10,
     "atk": 0,
-    "element": "Wind"
+    "element": "Wind",
+    "description": "VacuumFn pulls enemy in"
   },
   {
     "id": "136",
@@ -1641,7 +1776,8 @@
     ],
     "mb": 31,
     "atk": 130,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Cursor destroys panels!"
   },
   {
     "id": "137",
@@ -1653,7 +1789,8 @@
     ],
     "mb": 35,
     "atk": 150,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Stop sght w/Button and attck"
   },
   {
     "id": "138",
@@ -1663,7 +1800,8 @@
     ],
     "mb": 6,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Place a RockCube in front"
   },
   {
     "id": "139",
@@ -1675,7 +1813,8 @@
     ],
     "mb": 18,
     "atk": 100,
-    "element": "Object"
+    "element": "Object",
+    "description": "3pnl fwd Kttl attk Attack+"
   },
   {
     "id": "140",
@@ -1687,7 +1826,8 @@
     ],
     "mb": 23,
     "atk": 140,
-    "element": "Object"
+    "element": "Object",
+    "description": "3pnl fwd Kttl attk Attack+"
   },
   {
     "id": "141",
@@ -1699,7 +1839,8 @@
     ],
     "mb": 28,
     "atk": 180,
-    "element": "Object"
+    "element": "Object",
+    "description": "3pnl fwd Kttl attk Attack+"
   },
   {
     "id": "142",
@@ -1711,7 +1852,8 @@
     ],
     "mb": 26,
     "atk": 10,
-    "element": "Object"
+    "element": "Object",
+    "description": "Attk enmy w/flying FgtrPlne."
   },
   {
     "id": "143",
@@ -1723,7 +1865,8 @@
     ],
     "mb": 32,
     "atk": 10,
-    "element": "Object"
+    "element": "Object",
+    "description": "Attk enmy w/flying FgtrPlne."
   },
   {
     "id": "144",
@@ -1735,7 +1878,8 @@
     ],
     "mb": 39,
     "atk": 10,
-    "element": "Object"
+    "element": "Object",
+    "description": "Attk enmy w/flying FgtrPlne."
   },
   {
     "id": "145",
@@ -1747,7 +1891,8 @@
     ],
     "mb": 20,
     "atk": 150,
-    "element": "Object"
+    "element": "Object",
+    "description": "Explodes 3 seconds later"
   },
   {
     "id": "146",
@@ -1759,7 +1904,8 @@
     ],
     "mb": 30,
     "atk": 190,
-    "element": "Object"
+    "element": "Object",
+    "description": "Explodes 3 seconds later"
   },
   {
     "id": "147",
@@ -1771,7 +1917,8 @@
     ],
     "mb": 37,
     "atk": 230,
-    "element": "Object"
+    "element": "Object",
+    "description": "Explodes 3 seconds later"
   },
   {
     "id": "148",
@@ -1783,7 +1930,8 @@
     ],
     "mb": 28,
     "atk": 200,
-    "element": "Object"
+    "element": "Object",
+    "description": "Place a mine in enmy area"
   },
   {
     "id": "149",
@@ -1796,7 +1944,8 @@
     ],
     "mb": 20,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Take no dmage for a while"
   },
   {
     "id": "150",
@@ -1809,7 +1958,8 @@
     ],
     "mb": 20,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Confuses enemies w/music"
   },
   {
     "id": "151",
@@ -1822,7 +1972,8 @@
     ],
     "mb": 20,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Stop enmy feet with music"
   },
   {
     "id": "152",
@@ -1835,7 +1986,8 @@
     ],
     "mb": 20,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Blinds enemies w/music"
   },
   {
     "id": "153",
@@ -1848,7 +2000,8 @@
     ],
     "mb": 39,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Throws VDoll 3sq ahead"
   },
   {
     "id": "154",
@@ -1858,7 +2011,8 @@
     ],
     "mb": 64,
     "atk": 200,
-    "element": "Object"
+    "element": "Object",
+    "description": "Statue punishes when hit"
   },
   {
     "id": "155",
@@ -1868,7 +2022,8 @@
     ],
     "mb": 86,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Anubis poisons enemies"
   },
   {
     "id": "156",
@@ -1881,7 +2036,8 @@
     ],
     "mb": 4,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 10HP"
   },
   {
     "id": "157",
@@ -1894,7 +2050,8 @@
     ],
     "mb": 12,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 30HP"
   },
   {
     "id": "158",
@@ -1907,7 +2064,8 @@
     ],
     "mb": 18,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 50HP"
   },
   {
     "id": "159",
@@ -1920,7 +2078,8 @@
     ],
     "mb": 24,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 80HP"
   },
   {
     "id": "160",
@@ -1932,7 +2091,8 @@
     ],
     "mb": 32,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 120HP"
   },
   {
     "id": "161",
@@ -1944,7 +2104,8 @@
     ],
     "mb": 38,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 150HP"
   },
   {
     "id": "162",
@@ -1956,7 +2117,8 @@
     ],
     "mb": 42,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 200HP"
   },
   {
     "id": "163",
@@ -1968,7 +2130,8 @@
     ],
     "mb": 48,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Recovers 300HP"
   },
   {
     "id": "164",
@@ -1978,7 +2141,8 @@
     ],
     "mb": 6,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Steals 1 enemy square!"
   },
   {
     "id": "165",
@@ -1991,7 +2155,8 @@
     ],
     "mb": 8,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Steals left edge from enmy"
   },
   {
     "id": "166",
@@ -2003,7 +2168,8 @@
     ],
     "mb": 24,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "20 damage for every stolen sq"
   },
   {
     "id": "167",
@@ -2015,7 +2181,8 @@
     ],
     "mb": 50,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "40 damage for every stolen sq"
   },
   {
     "id": "168",
@@ -2025,7 +2192,8 @@
     ],
     "mb": 14,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Fix your area's panels"
   },
   {
     "id": "169",
@@ -2038,7 +2206,8 @@
     ],
     "mb": 47,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Breaks all empty panels"
   },
   {
     "id": "170",
@@ -2051,7 +2220,8 @@
     ],
     "mb": 24,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Creates a HolyPanl in front"
   },
   {
     "id": "171",
@@ -2061,7 +2231,8 @@
     ],
     "mb": 62,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Chng all own panel to holy"
   },
   {
     "id": "172",
@@ -2071,7 +2242,8 @@
     ],
     "mb": 21,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Pull an enemy to the front"
   },
   {
     "id": "173",
@@ -2081,7 +2253,8 @@
     ],
     "mb": 21,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Push an enemy to the back"
   },
   {
     "id": "174",
@@ -2094,7 +2267,8 @@
     ],
     "mb": 42,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "CustGauge slow-down"
   },
   {
     "id": "175",
@@ -2107,7 +2281,8 @@
     ],
     "mb": 48,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "CustGauge speed-up"
   },
   {
     "id": "176",
@@ -2117,7 +2292,8 @@
     ],
     "mb": 50,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "CustGauge instantly refills"
   },
   {
     "id": "177",
@@ -2127,7 +2303,8 @@
     ],
     "mb": 11,
     "atk": 0,
-    "element": "Plus"
+    "element": "Plus",
+    "description": "Power goes up by 1"
   },
   {
     "id": "178",
@@ -2140,7 +2317,8 @@
     ],
     "mb": 62,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Repairs & removes bugs"
   },
   {
     "id": "179",
@@ -2150,7 +2328,8 @@
     ],
     "mb": 30,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Invisible for a while"
   },
   {
     "id": "180",
@@ -2163,7 +2342,8 @@
     ],
     "mb": 7,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Nullifies 10 HP of damage"
   },
   {
     "id": "181",
@@ -2175,7 +2355,8 @@
     ],
     "mb": 30,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Nullifies 100 HP of damage"
   },
   {
     "id": "182",
@@ -2187,7 +2368,8 @@
     ],
     "mb": 52,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Nullifies 200 HP of damage"
   },
   {
     "id": "183",
@@ -2199,7 +2381,8 @@
     ],
     "mb": 58,
     "atk": 0,
-    "element": "Water"
+    "element": "Water",
+    "description": "Weak against elec atk"
   },
   {
     "id": "184",
@@ -2209,7 +2392,8 @@
     ],
     "mb": 70,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Repel all attacks under200"
   },
   {
     "id": "185",
@@ -2219,7 +2403,8 @@
     ],
     "mb": 14,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Draw in enmy with mag force"
   },
   {
     "id": "186",
@@ -2232,7 +2417,8 @@
     ],
     "mb": 25,
     "atk": 40,
-    "element": "Null"
+    "element": "Null",
+    "description": "Launch an attk with Col. army"
   },
   {
     "id": "187",
@@ -2245,7 +2431,8 @@
     ],
     "mb": 42,
     "atk": 240,
-    "element": "Null"
+    "element": "Null",
+    "description": "Trap enmy and attk with elem"
   },
   {
     "id": "188",
@@ -2258,7 +2445,8 @@
     ],
     "mb": 50,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Takes the enemy's Navi away"
   },
   {
     "id": "189",
@@ -2271,7 +2459,8 @@
     ],
     "mb": 30,
     "atk": 100,
-    "element": "Null"
+    "element": "Null",
+    "description": "Sets trap and throw stars"
   },
   {
     "id": "190",
@@ -2284,7 +2473,8 @@
     ],
     "mb": 33,
     "atk": 100,
-    "element": "Sword"
+    "element": "Sword",
+    "description": "Retaliate for sword damage"
   },
   {
     "id": "191",
@@ -2297,7 +2487,8 @@
     ],
     "mb": 37,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Damages enemy in recovery"
   },
   {
     "id": "192",
@@ -2307,7 +2498,8 @@
     ],
     "mb": 30,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Add an effect: Paralyze"
   },
   {
     "id": "193",
@@ -2319,7 +2511,8 @@
     ],
     "mb": 60,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Attach to NoDim Chp NavCusOff"
   },
   {
     "id": "194",
@@ -2329,7 +2522,8 @@
     ],
     "mb": 12,
     "atk": 0,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Duplicate damage to 2nd enemy"
   },
   {
     "id": "195",
@@ -2339,7 +2533,8 @@
     ],
     "mb": 12,
     "atk": 0,
-    "element": "Cursor"
+    "element": "Cursor",
+    "description": "Makes HP same as enemy"
   },
   {
     "id": "196",
@@ -2349,7 +2544,8 @@
     ],
     "mb": 4,
     "atk": 0,
-    "element": "Object"
+    "element": "Plus",
+    "description": "+10 for selected atk chip"
   },
   {
     "id": "197",
@@ -2359,7 +2555,8 @@
     ],
     "mb": 66,
     "atk": 0,
-    "element": "Object"
+    "element": "Plus",
+    "description": "+30 for selected atk chip"
   },
   {
     "id": "198",
@@ -2369,7 +2566,8 @@
     ],
     "mb": 36,
     "atk": 0,
-    "element": "Object"
+    "element": "Plus",
+    "description": "+20 for selected Navi chip"
   },
   {
     "id": "199",
@@ -2379,7 +2577,8 @@
     ],
     "mb": 31,
     "atk": 0,
-    "element": "Object"
+    "element": "Plus",
+    "description": "+10 for next chip attack"
   },
   {
     "id": "200",
@@ -2389,7 +2588,8 @@
     ],
     "mb": 50,
     "atk": 0,
-    "element": "Object"
+    "element": "Plus",
+    "description": "+20 for next chip attack"
   },
   {
     "id": "201",
@@ -2399,7 +2599,8 @@
     ],
     "mb": 80,
     "atk": 0,
-    "element": "Null"
+    "element": "Null",
+    "description": "Fires a spread sunbeam"
   },
   {
     "id": "202",
@@ -2409,6 +2610,7 @@
     ],
     "mb": 66,
     "atk": 0,
-    "element": "Object"
+    "element": "Object",
+    "description": "Put Otnko to raise atk pwr"
   }
 ]

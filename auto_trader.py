@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+import math
 import multiprocessing
 import time
 from enum import Enum
 from queue import Queue
-from typing import Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, Generic, List, Tuple, TypeVar, Union
 
-import discord
 from discord.ext import commands
 
 from bn_automation import image_processing
-from bn_automation.controller import Button, Controller, DPad
+from bn_automation.controller import Button, Command, Controller, DPad
 from bn_automation.script import Script
 from chip import Chip, Sort
 from chip_list import ChipList
+from navicust_part import NaviCustPart
+from navicust_part_list import NaviCustPartList
+
+T = TypeVar("T")
 
 
 class DiscordContext:
@@ -41,29 +45,30 @@ class TradeResult(Enum):
     InvalidInput = 4
     UserTimeOut = 5
     Cancelled = 6
+    CommunicationError = 7
 
 
-class Node:
-    def __init__(self, chip: Chip):
-        self.chip = chip
-        self.neighbors: Dict[Union[Button, DPad], Node] = {}
+class Node(Generic[T]):
+    def __init__(self, obj: T):
+        self.obj = obj
+        self.neighbors: Dict[Union[Button, DPad], Node[T]] = {}
 
-    def add(self, node: "Node", button: Union[Button, DPad]) -> "Node":
+    def add(self, node: "Node[T]", button: Union[Button, DPad]) -> "Node[T]":
         self.neighbors[button] = node
         return self
 
-    def __repr__(self):
-        return repr(self.chip)
+    def __repr__(self) -> str:
+        return repr(self.obj)
 
-    def __hash__(self):
-        return hash(self.chip)
+    def __hash__(self) -> int:
+        return hash(self.obj)
 
-    def search(self, target: Chip) -> List[Tuple[Union[Button, DPad], "Node"]]:
-        if self.chip == target:
+    def search(self, target: T) -> List[Tuple[Union[Button, DPad], "Node[T]"]]:
+        if self.obj == target:
             return []
 
         visited = set()
-        q: Queue[Tuple[Node, List[Union[Button, DPad]], List[Node]]] = Queue()
+        q: Queue[Tuple[Node[T], List[Union[Button, DPad]], List[Node[T]]]] = Queue()
         q.put((self, [], []))
         visited.add(self)
 
@@ -71,7 +76,7 @@ class Node:
 
         while not q.empty():
             node, path, visited_nodes = q.get()
-            if node.chip == target and (shortest is None or len(shortest) > len(path)):
+            if node.obj == target and (shortest is None or len(shortest) > len(path)):
                 shortest = list(zip(path, visited_nodes))
             for controller_input, neighbor in node.neighbors.items():
                 if neighbor not in visited:
@@ -81,11 +86,11 @@ class Node:
         if shortest is not None:
             return shortest
 
-        raise RuntimeError(f"Path from {self.chip.name} {self.chip.code} to {target.name} {target.code} not found")
+        raise RuntimeError(f"Path from {str(self.obj)} to {str(target)} not found")
 
 
-def build_input_graph(chip_list: List[Chip]) -> List[Node]:
-    nodes = [Node(chip) for chip in chip_list]
+def build_input_graph(obj_list: List[T]) -> List[Node[T]]:
+    nodes = [Node(obj) for obj in obj_list]
     for i in range(1, len(nodes) - 1):
         node = nodes[i]
         node.add(nodes[min((i + 8), len(nodes) - 1)], Button.R)
@@ -109,19 +114,20 @@ def build_input_graph(chip_list: List[Chip]) -> List[Node]:
 
 
 class RoomCodeMessage:
-    def __init__(self, discord_context: DiscordContext, chip: Chip, image: bytes):
+    def __init__(self, discord_context: DiscordContext, obj: Any, image: bytes):
         self.discord_context = discord_context
-        self.chip = chip
+        self.obj = str(obj)
         self.image = image
 
 
 class AutoTrader(Script):
     def __init__(self, controller: Controller):
         super().__init__(controller)
-        self.root_node = self.build_all_input_graphs()
+        self.root_chip_node = self.build_all_chip_input_graphs()
+        self.root_ncp_node = self.build_ncp_input_graph()
 
     @staticmethod
-    def build_all_input_graphs() -> Node:
+    def build_all_chip_input_graphs() -> Node[Chip]:
         graphs = [build_input_graph(ChipList.TRADABLE_CHIP_ORDER[sort]) for sort in Sort]
         id_root = graphs[0][0]
         abcde_root = graphs[1][0]
@@ -140,8 +146,16 @@ class AutoTrader(Script):
         mb_root.add(id_root, Button.Plus)
         return id_root
 
-    def calculate_inputs(self, chip: Chip) -> List[Tuple[Union[Button, DPad], Node]]:
-        return self.root_node.search(chip)
+    @staticmethod
+    def build_ncp_input_graph() -> Node[NaviCustPart]:
+        ncp_graph = build_input_graph(NaviCustPartList.ALL_PARTS + [NaviCustPartList.NOTHING])
+        return ncp_graph[0]
+
+    def calculate_chip_inputs(self, chip: Chip) -> List[Tuple[Union[Button, DPad], Node[Chip]]]:
+        return self.root_chip_node.search(chip)
+
+    def calculate_ncp_inputs(self, ncp: NaviCustPart) -> List[Tuple[Union[Button, DPad], Node[NaviCustPart]]]:
+        return self.root_ncp_node.search(ncp)
 
     def reset(self):
         self.home(wait_time=1000)
@@ -191,7 +205,7 @@ class AutoTrader(Script):
         self.up()
         self.a(wait_time=3000)
 
-    def navigate_to_trade_screen(self) -> bool:
+    def navigate_to_chip_trade_screen(self) -> bool:
         # navigate to trade screen
         # Trade
         self.down()
@@ -210,11 +224,33 @@ class AutoTrader(Script):
         # Next
         self.a()
 
-        return self.wait_for_chip_select()
-
-    def wait_for_chip_select(self) -> bool:
         print("Waiting for chip select")
         return self.wait_for_text(lambda ocr_text: ocr_text == "Sort : ID", (1054, 205), (162, 48), 10)
+
+    def navigate_to_ncp_trade_screen(self) -> bool:
+        # navigate to trade screen
+        # Trade
+        self.down()
+        self.a()
+
+        # Private Trade
+        self.down()
+        self.a()
+
+        # Create Room
+        self.a()
+
+        # Program Trade
+        self.down()
+        self.a()
+
+        # Next
+        self.a()
+
+        print("Waiting for ncp select")
+        return self.wait_for_text(
+            lambda ocr_text: ocr_text == "SuprArmr", (1080, 270), (200, 60), timeout=10, invert=False
+        )
 
     """
     def check_lowest_chip_qty(self) -> int:
@@ -236,33 +272,57 @@ class AutoTrader(Script):
             trade_cancelled.set()
             cancel_lock.release()
             return True
+        trade_cancelled.set()
         cancel_lock.release()
         return False
+
+    def get_last_inputs(self) -> List[str]:
+        last_inputs = []
+        for previous_input in self.last_inputs:
+            if isinstance(previous_input, Command):
+                buttons = previous_input.current_buttons
+                dpad = previous_input.current_dpad
+                left_angle, left_intensity = previous_input.current_left_stick
+                right_angle, right_intensity = previous_input.current_right_stick
+
+                input_strs = []
+                if len(buttons) != 0:
+                    input_strs.append(" | ".join([button.name for button in buttons]))
+                if dpad != DPad.Center:
+                    input_strs.append(dpad.name)
+                if left_intensity != 0:
+                    input_strs.append(f"LS {left_angle} {left_intensity}")
+                if right_intensity != 0:
+                    input_strs.append(f"RS {right_angle} {right_intensity}")
+                if len(input_strs) == 0:
+                    input_strs.append("nothing")
+                input_str = ", ".join(input_strs)
+                if previous_input.time > 0:
+                    input_str += f" {math.ceil(previous_input.time / 8) * 8}ms"
+                last_inputs.append(input_str)
+            else:
+                last_inputs.append(f"Wait {previous_input}ms")
+        return last_inputs
 
     def trade(
         self,
         discord_context: DiscordContext,
-        chip: Chip,
+        trade_item: T,
+        navigate_func: Callable[[], bool],
+        input_tuples: List[Tuple[Union[Button, DPad], Node[T]]],
         cancel_trade_for_user_id: multiprocessing.Value,
         trade_cancelled: multiprocessing.Event,
-        room_code_queue: multiprocessing.JoinableQueue,
+        image_send_queue: multiprocessing.JoinableQueue,
     ) -> Tuple[TradeResult, Union[bytes, str]]:
-        print(f"Trading {chip}")
+        print(f"Trading {str(trade_item)}")
 
-        success = self.navigate_to_trade_screen()
+        self.last_inputs.clear()
+
+        success = navigate_func()
         if not success:
             return TradeResult.UnexpectedState, "Unable to open trade screen."
 
-        if self.check_for_cancel(trade_cancelled, cancel_trade_for_user_id, discord_context.user_id):
-            self.repeat(self.b, 5, wait_time=200)
-            self.up()
-            return TradeResult.Cancelled, "Trade cancelled by user."
-
-        self.wait(1000)
-
-        input_tuples = self.calculate_inputs(chip)
         for controller_input, selected_chip in input_tuples:
-            # print(controller_input, selected_chip)
             if isinstance(controller_input, DPad):
                 self.controller.press_dpad(controller_input)
             else:
@@ -280,17 +340,13 @@ class AutoTrader(Script):
         if not self.wait_for_text(lambda ocr_text: ocr_text.startswith("Room Code: "), (1242, 89), (365, 54), 15):
             return TradeResult.UnexpectedState, "Unable to retrieve room code."
 
-        if self.check_for_cancel(trade_cancelled, cancel_trade_for_user_id, discord_context.user_id):
-            self.b(wait_time=1000)
-            self.a(wait_time=1000)
-            return TradeResult.Cancelled, "Trade cancelled by user."
-
-        room_code_image = image_processing.crop_image(image_processing.capture(), (1242, 89), (365, 60))
+        frame = image_processing.capture()
+        room_code_image = image_processing.crop_to_bounding_box(frame, (1242, 89), (400, 80), invert=True)
         image_bytestring = image_processing.convert_image_to_png_bytestring(room_code_image)
 
         # Send room code back to consumer, wait for it to be processed before continuing
-        room_code_queue.put(RoomCodeMessage(discord_context, chip, image_bytestring))
-        room_code_queue.join()
+        image_send_queue.put(RoomCodeMessage(discord_context, trade_item, image_bytestring))
+        image_send_queue.join()
 
         start_time = time.time()
         print("Waiting 180s for user")
@@ -298,23 +354,70 @@ class AutoTrader(Script):
             if self.check_for_cancel(trade_cancelled, cancel_trade_for_user_id, discord_context.user_id):
                 self.b(wait_time=1000)
                 self.a(wait_time=1000)
+                print("Cancelling trade within timeout period")
                 return TradeResult.Cancelled, "Trade cancelled by user."
-
-            text = image_processing.run_tesseract_line(image_processing.capture(), (785, 123), (160, 60))
-            if text == "1/15":
-                self.wait(500)
-                self.a(wait_time=2000)
-                self.a()
-                if self.wait_for_text(lambda ocr_text: ocr_text == "Trade complete!", (815, 440), (310, 55), 20):
-                    self.a(wait_time=2000)
-                    if self.wait_for_text(lambda ocr_text: ocr_text == "NETWORK", (55, 65), (225, 50), 10):
-                        self.wait(2000)
-                        return TradeResult.Success, "Trade successful."
+            elif (
+                image_processing.run_tesseract_line(image_processing.capture(), (660, 440), (620, 50))
+                == "A communication error occurred."
+            ):
+                self.a(wait_time=1000)
+                print("Communication error, restarting")
+                return TradeResult.CommunicationError, "There was a communication error. Retrying."
+            else:
+                text = image_processing.run_tesseract_line(image_processing.capture(), (785, 123), (160, 60))
+                if text == "1/15":
+                    print("User joined lobby")
+                    self.wait(500)
+                    self.a(wait_time=1000)
+                    self.a()
+                    print("User completed trade")
+                    if self.wait_for_text(lambda ocr_text: ocr_text == "Trade complete!", (815, 440), (310, 55), 20):
+                        self.a(wait_time=1000)
+                        if self.wait_for_text(lambda ocr_text: ocr_text == "NETWORK", (55, 65), (225, 50), 10):
+                            print("Back at main menu")
+                            self.wait(2000)
+                            return TradeResult.Success, "Trade successful."
+                        else:
+                            return TradeResult.UnexpectedState, "I think the trade was successful, but something broke."
                     else:
-                        return TradeResult.UnexpectedState, "I think the trade was successful, but something broke."
-                else:
-                    return TradeResult.UnexpectedState, "Trade failed due to an unexpected state."
+                        return TradeResult.UnexpectedState, "Trade failed due to an unexpected state."
 
         self.b(wait_time=1000)
         self.a(wait_time=1000)
         return TradeResult.UserTimeOut, "Trade cancelled due to timeout."
+
+    def trade_chip(
+        self,
+        discord_context: DiscordContext,
+        chip: Chip,
+        cancel_trade_for_user_id: multiprocessing.Value,
+        trade_cancelled: multiprocessing.Event,
+        image_send_queue: multiprocessing.JoinableQueue,
+    ) -> Tuple[TradeResult, Union[bytes, str]]:
+        return self.trade(
+            discord_context,
+            chip,
+            self.navigate_to_chip_trade_screen,
+            self.calculate_chip_inputs(chip),
+            cancel_trade_for_user_id,
+            trade_cancelled,
+            image_send_queue,
+        )
+
+    def trade_ncp(
+        self,
+        discord_context: DiscordContext,
+        ncp: NaviCustPart,
+        cancel_trade_for_user_id: multiprocessing.Value,
+        trade_cancelled: multiprocessing.Event,
+        image_send_queue: multiprocessing.JoinableQueue,
+    ) -> Tuple[TradeResult, Union[bytes, str]]:
+        return self.trade(
+            discord_context,
+            ncp,
+            self.navigate_to_ncp_trade_screen,
+            self.calculate_ncp_inputs(ncp),
+            cancel_trade_for_user_id,
+            trade_cancelled,
+            image_send_queue,
+        )

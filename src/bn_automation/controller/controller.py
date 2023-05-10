@@ -1,6 +1,6 @@
 import math
 import time
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from .commands import ControllerRequest
 from .raw_inputs import ExtendedIntFlagEnum, RawButton, RawDPad, _RawDPad
@@ -101,6 +101,26 @@ class Command:
         self.time = value
         return self
 
+    @property
+    def current_buttons(self) -> List[Button]:
+        retval = []
+        for button in Button:
+            if self._buttons & button.value:
+                retval.append(button)
+        return retval
+
+    @property
+    def current_dpad(self) -> DPad:
+        return self._dpad
+
+    @property
+    def current_left_stick(self) -> Tuple[int, int]:
+        return self._stick_angle & 0xFFFF, self._stick_intensity & 0xFFFF
+
+    @property
+    def current_right_stick(self) -> Tuple[int, int]:
+        return (self._stick_angle >> 16) & 0xFFFF, (self._stick_intensity >> 16) & 0xFFFF
+
     def _translate_dpad(self):
         # ew
         return getattr(RawDPad, DPad(self._dpad).name) >> _RawDPad.SHIFT_BITS
@@ -118,10 +138,8 @@ class Command:
         button_high = (self._buttons >> 8) & 0xFF
         dpad = self._translate_dpad()
 
-        left_angle = self._stick_angle & 0xFFFF
-        right_angle = (self._stick_angle >> 16) & 0xFFFF
-        left_intensity = self._stick_intensity & 0xFFFF
-        right_intensity = (self._stick_intensity >> 16) & 0xFFFF
+        left_angle, left_intensity = self.current_left_stick
+        right_angle, right_intensity = self.current_right_stick
 
         left_x, left_y = self._translate_angle(left_angle, left_intensity)
         right_x, right_y = self._translate_angle(right_angle, right_intensity)

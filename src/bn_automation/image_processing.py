@@ -1,9 +1,11 @@
 import os
+import sys
 from typing import Any, Tuple
 
 import cv2 as cv
 import numpy as np
 import pytesseract
+from pytesseract import Output
 
 DEMONEYE_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "demoneye_1345_25.png"), cv.IMREAD_COLOR)
 RESULT_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "results_365_120.png"), cv.IMREAD_COLOR)
@@ -107,6 +109,38 @@ def run_tesseract(image, top_left, text_size, config, invert):
     )
 
     return pytesseract.image_to_string(border, config=config)
+
+
+def crop_to_bounding_box(image, top_left, text_size, invert):
+    scaled_top_left = scale_coords(image, (1920, 1080), top_left)
+    scaled_text_size = scale_coords(image, (1920, 1080), text_size)
+
+    roi = crop_image(image, scaled_top_left, scaled_text_size)
+    gray_image = cv.cvtColor(roi, cv.COLOR_BGR2GRAY)
+    _, bw_image = cv.threshold(gray_image, 30, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
+    if not invert:
+        bw_image = cv.bitwise_not(bw_image)
+
+    contours = cv.findContours(bw_image, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    contours = contours[0] if len(contours) == 2 else contours[1]
+
+    min_x, min_y, max_x, max_y = (sys.maxsize, sys.maxsize, 0, 0)
+    for c in contours:
+        x, y, w, h = cv.boundingRect(c)
+        min_x = min(min_x, x)
+        min_y = min(min_y, y)
+        max_x = max(max_x, x + w)
+        max_y = max(max_y, y + h)
+
+    border = 10
+    img_h, img_w, _ = image.shape
+    min_x = max(scaled_top_left[0] + min_x - border, 0)
+    min_y = max(scaled_top_left[1] + min_y - border, 0)
+    max_x = min(scaled_top_left[0] + max_x + border, img_w)
+    max_y = min(scaled_top_left[1] + max_y + border, img_h)
+
+    bounded_img = crop_image(image, (min_x, min_y), (max_x - min_x, max_y - min_y))
+    return bounded_img
 
 
 def on_controller_screen(capture: cv.VideoCapture) -> bool:

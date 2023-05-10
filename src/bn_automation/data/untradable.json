@@ -7,7 +7,8 @@
     ],
     "mb": 32,
     "atk": 140,
-    "element": "Null"
+    "element": "Null",
+    "description": "Throws a 9 panl bomb 3panl fwd"
   },
   {
     "id": "089",
@@ -17,7 +18,8 @@
     ],
     "mb": 8,
     "atk": 60,
-    "element": "Null"
+    "element": "Null",
+    "description": "Shoot 2 panels at an enemy!"
   },
   {
     "id": "120",
@@ -27,7 +29,8 @@
     ],
     "mb": 26,
     "atk": 140,
-    "element": "Wood"
+    "element": "Wood",
+    "description": "Boomerang that circ btl field"
   },
   {
     "id": "167",
@@ -37,26 +40,7 @@
     ],
     "mb": 50,
     "atk": 0,
-    "element": "Null"
-  },
-  {
-    "id": "CF ---",
-    "name": "Falzar",
-    "codes": [
-      "X"
-    ],
-    "mb": 99,
-    "atk": 100,
-    "element": "Null"
-  },
-  {
-    "id": "CG ---",
-    "name": "Gregar",
-    "codes": [
-      "X"
-    ],
-    "mb": 99,
-    "atk": 300,
-    "element": "Null"
+    "element": "Null",
+    "description": "40 damage for every stolen sq"
   }
 ]

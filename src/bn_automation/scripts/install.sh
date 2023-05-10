@@ -27,7 +27,7 @@ appendfile $TEXT $FILE
 
 # Create systemd service file
 UNITFILE='/etc/systemd/system/usb-gadget.service'
-STARTUP_CMD="$DIR/../../../venv/bin/python -u $DIR/start_server.py"
+STARTUP_CMD="$DIR/../../../venv/bin/python -u $DIR/start_server.py > /dev/null"
 
 echo "Writing systemd service file to $UNITFILE"
 

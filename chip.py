@@ -1,5 +1,8 @@
 import functools
+import os
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 class Sort(Enum):
@@ -85,7 +88,9 @@ class Chip:
     GIGA = 3
     NOTHING = 4
 
-    def __init__(self, name: str, chip_id: str, code: Code, atk: int, element: Element, mb: int, chip_type: int):
+    def __init__(
+        self, name: str, chip_id: str, code: Code, atk: int, element: Element, mb: int, chip_type: int, description: str
+    ):
         self.name = name
         self.chip_id = chip_id
         self.code = code
@@ -93,11 +98,31 @@ class Chip:
         self.element = element
         self.mb = mb
         self.chip_type = chip_type
+        self.description = description
 
     @property
     def sorting_chip_id(self) -> str:
         # Ugly hack to get proper sorting
         return "007 " + self.chip_id if self.is_link_navi_chip() else self.chip_id
+
+    @property
+    def chip_image_path(self) -> str:
+        # TODO: ew
+
+        base_path = Path(os.path.join(os.path.dirname(__file__), "src/bn_automation/chip_images"))
+        if self.chip_type == Chip.STANDARD:
+            filename = f"BN6Chip{self.chip_id}.png"
+        elif self.chip_type == Chip.MEGA:
+            if self.is_link_navi_chip():
+                filename = f"BN6{self.chip_id[1]}MChip{self.get_chip_id()}.png"
+            else:
+                filename = f"BN6MChip{self.get_chip_id()}.png"
+        elif self.chip_type == Chip.GIGA:
+            filename = f"BN6{self.chip_id[1]}GChip{self.get_chip_id()}.png"
+        else:
+            raise RuntimeError(f"Bad chip type {self.chip_type}")
+
+        return str(base_path / filename)
 
     def is_link_navi_chip(self) -> bool:
         return self.chip_id.startswith("C")
@@ -105,7 +130,7 @@ class Chip:
     def get_chip_id(self) -> str:
         return self.chip_id.split(" ")[-1]
 
-    def __le__(self, other: "Chip"):
+    def __le__(self, other: "Chip") -> bool:
         if self.chip_type != other.chip_type:
             return self.chip_type < other.chip_type
 
@@ -119,24 +144,40 @@ class Chip:
 
         return self.sorting_chip_id < other.sorting_chip_id
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if other is None:
             return False
         return self.__dict__ == other.__dict__
 
     @classmethod
-    def make(cls, d, t):
+    def make(cls, chip_dict: Dict[str, Any], chip_type: int) -> List["Chip"]:
         ret = []
-        for code in d["codes"]:
+        for code in chip_dict["codes"]:
             if code == "*":
                 code = "Star"
-            ret.append(cls(d["name"], d["id"], Code[code], d["atk"], Element[d["element"]], d["mb"], t))
+            ret.append(
+                cls(
+                    chip_dict["name"],
+                    chip_dict["id"],
+                    Code[code],
+                    chip_dict["atk"],
+                    Element[chip_dict["element"]],
+                    chip_dict["mb"],
+                    chip_type,
+                    chip_dict["description"],
+                )
+            )
         return ret
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.name, self.chip_id, self.code, self.element.value, self.atk, self.mb, self.chip_type))
 
     def __repr__(self) -> str:
         if self.chip_type == 3:
             return "Nothing"
         return f"{self.chip_id} - {self.name} {self.code} ({self.element.name}, {self.atk}, {self.mb}MB)"
+
+    def __str__(self) -> str:
+        if self.chip_type == 3:
+            return "Nothing"
+        return f"{self.name} {self.code}"

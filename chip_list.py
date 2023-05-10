@@ -2,11 +2,11 @@ import functools
 import json
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from chip import Chip, Code, Element, Sort
 
-_nothing = Chip("Nothing", "999", Code.Star, 0, Element.Null, 100, Chip.NOTHING)
+_nothing = Chip("Nothing", "999", Code.Star, 0, Element.Null, 100, Chip.NOTHING, "")
 SORT_METHODS = [Sort.ID, Sort.ABCDE, Sort.Code, Sort.Attack, Sort.Element, Sort.No, Sort.MB]
 
 
@@ -42,18 +42,33 @@ def _get_all_chips() -> List[Chip]:
 
 
 @functools.cache
-def _get_untradable_chips() -> List[Chip]:
+def _get_untradable_standard_chips() -> List[Chip]:
     return _read_chips_from_file("untradable.json", Chip.STANDARD)
 
 
 @functools.cache
+def _get_untradable_mega_chips() -> List[Chip]:
+    return _read_chips_from_file("untradable_mega.json", Chip.MEGA)
+
+
+@functools.cache
+def _get_untradable_chips() -> List[Chip]:
+    return _get_untradable_standard_chips() + _get_untradable_mega_chips()
+
+
+@functools.cache
 def _get_tradable_standard_chips() -> List[Chip]:
-    return sorted(set(_get_standard_chips()) - set(_get_untradable_chips()))
+    return sorted(set(_get_standard_chips()) - set(_get_untradable_standard_chips()))
+
+
+@functools.cache
+def _get_tradable_mega_chips() -> List[Chip]:
+    return sorted(set(_get_mega_chips()) - set(_get_untradable_mega_chips()))
 
 
 @functools.cache
 def _get_tradable_chips() -> List[Chip]:
-    return _get_tradable_standard_chips() + _get_mega_chips()
+    return _get_tradable_standard_chips() + _get_tradable_mega_chips()
 
 
 @functools.cache
@@ -84,16 +99,18 @@ def calculate_sort_result(sort: Sort) -> List[Chip]:
         ) + [_nothing]
     elif sort == Sort.No:
         # Sentinel values to make things easier
-        return [Chip("", "", Code.Star, 0, Element.Null, 0, Chip.NOTHING)] * 9
+        return [Chip("", "", Code.Star, 0, Element.Null, 0, Chip.NOTHING, "")] * 9
     else:
         raise RuntimeError("Unsupported sort type")
 
 
 class ChipList:
     @classmethod
-    def get_chip(cls, name: str, code: str) -> Optional[Chip]:
+    def get_tradable_chip(cls, name: str, code: Union[str, Code]) -> Optional[Chip]:
         try:
-            if code == "*":
+            if isinstance(code, Code):
+                chip_code = code
+            elif code == "*":
                 chip_code = Code.Star
             else:
                 chip_code = Code[code.upper()]
@@ -102,12 +119,22 @@ class ChipList:
         except KeyError:
             return None
 
+    @classmethod
+    def get_chips_by_name(cls, name: str) -> List[Chip]:
+        retval = []
+        for chip in cls.ALL_CHIPS:
+            if chip.name.lower() == name.lower():
+                retval.append(chip)
+        return retval
+
     STANDARD_CHIPS = _get_standard_chips()
     MEGA_CHIPS = _get_mega_chips()
     GIGA_CHIPS = _get_giga_chips()
     ALL_CHIPS = _get_all_chips()
-    UNTRADABLE_STANDARD_CHIPS = _get_untradable_chips()
+    UNTRADABLE_CHIPS = _get_untradable_chips()
     TRADABLE_STANDARD_CHIPS = _get_tradable_standard_chips()
+    TRADABLE_MEGA_CHIPS = _get_tradable_mega_chips()
+    TRADABLE_CHIPS = _get_tradable_chips()
     NOTHING = _nothing
 
     TRADABLE_CHIP_ORDER = {method: calculate_sort_result(method) for method in SORT_METHODS}

@@ -22,12 +22,14 @@ class SocketSink(ControllerSink):
 
     def __enter__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print(f"Connecting to {self.ip}:{self.port}")
         self.sock.connect((self.ip, self.port))
 
         # wait for connection
         while True:
             msg = ControllerResponse.from_bytes(self.sock.recv(1), byteorder="little")
             if msg == ControllerResponse.HOST_ENABLED:
+                print("Connected to controller host")
                 break
             else:
                 raise ValueError(f"Unexpected response from server: {msg}")

@@ -10,6 +10,7 @@ from discord.ext import commands
 
 from auto_trader import DiscordContext, RoomCodeMessage
 from chip_list import ChipList
+from navicust_part_list import NaviCustPartList
 from trade_manager import (
     CancelCommand,
     ClearQueueCommand,
@@ -17,6 +18,8 @@ from trade_manager import (
     ListQueueCommand,
     PauseQueueCommand,
     RequestCommand,
+    ScreenCaptureCommand,
+    ScreenCaptureMessage,
     TradeManager,
 )
 
@@ -34,7 +37,7 @@ def in_channel_check(ctx: commands.Context):
 in_channel = commands.check(in_channel_check)
 
 
-class ChipTradeCog(commands.Cog, name="Chip Trade"):
+class TradeCog(commands.Cog, name="Trade"):
     def __init__(self, bot: commands.Bot, trade_manager: TradeManager):
         self.bot = bot
         self.trade_manager = trade_manager
@@ -42,7 +45,7 @@ class ChipTradeCog(commands.Cog, name="Chip Trade"):
     @commands.Cog.listener()
     async def on_ready(self):
         threading.Thread(target=self.handle_message_requests, daemon=True).start()
-        threading.Thread(target=self.handle_room_code_requests, daemon=True).start()
+        threading.Thread(target=self.handle_image_message_requests, daemon=True).start()
 
     async def reply_to_command(self, message_request: DiscordMessageReplyRequest):
         discord_channel = self.bot.get_channel(message_request.discord_context.channel_id)
@@ -66,36 +69,53 @@ class ChipTradeCog(commands.Cog, name="Chip Trade"):
 
     async def message_room_code(self, room_code_request: RoomCodeMessage):
         user = await self.bot.fetch_user(room_code_request.discord_context.user_id)
-        chip = room_code_request.chip
+        obj = room_code_request.obj
         await user.send(
-            f"Your `{chip.name} {chip.code}` is ready! You have 180 seconds to join",
+            f"Your `{str(obj)}` is ready! You have 180 seconds to join",
             silent=False,
             file=discord.File(fp=io.BytesIO(room_code_request.image), filename="roomcode.png"),
         )
 
-    def handle_room_code_requests(self):
+    async def message_screenshot(self, message_request: ScreenCaptureMessage):
+        user = await self.bot.fetch_user(self.bot.owner_id)
+        await user.send(
+            f"Screencapture",
+            silent=False,
+            file=discord.File(fp=io.BytesIO(message_request.image), filename="screencapture.png"),
+        )
+
+    def handle_image_message_requests(self):
         while True:
             try:
-                room_code_request = self.trade_manager.room_code_queue.get()
-                asyncio.run_coroutine_threadsafe(self.message_room_code(room_code_request), self.bot.loop)
-                self.trade_manager.room_code_queue.task_done()
+                image_request = self.trade_manager.image_send_queue.get()
+                if isinstance(image_request, RoomCodeMessage):
+                    asyncio.run_coroutine_threadsafe(self.message_room_code(image_request), self.bot.loop)
+                elif isinstance(image_request, ScreenCaptureMessage):
+                    asyncio.run_coroutine_threadsafe(self.message_screenshot(image_request), self.bot.loop)
             except Exception:
                 import traceback
 
                 traceback.print_exc()
 
+            self.trade_manager.image_send_queue.task_done()
+
     @commands.command()
     @in_channel
-    async def request(self, ctx: commands.Context, chip_name: str, chip_code: str):
-        chip = ChipList.get_chip(chip_name, chip_code)
-        if chip is None:
-            await ctx.message.reply("That's not a tradable chip. Make sure to use in-game spelling.")
+    async def request(self, ctx: commands.Context, item_name: str, item_variant: str):
+        chip = ChipList.get_tradable_chip(item_name, item_variant)
+        ncp = NaviCustPartList.get_ncp(item_name, item_variant)
+        if chip is None and ncp is None:
+            await ctx.message.reply("That's not a tradable chip or NaviCust part. Make sure to use in-game spelling.")
         else:
-            self.trade_manager.request_queue.put(RequestCommand(DiscordContext.create(ctx), chip))
+            self.trade_manager.request_queue.put(RequestCommand(DiscordContext.create(ctx), chip or ncp))
 
     @commands.command()
     @in_channel
     async def cancel(self, ctx: commands.Context, user_id: Optional[int] = None):
+        if not self.bot.is_owner(ctx.author):
+            await ctx.message.reply("This command is temporarily disabled.")
+            return
+
         if user_id is not None:
             if not await self.bot.is_owner(ctx.author):
                 await ctx.message.reply("You can only cancel your own requests.")
@@ -124,16 +144,21 @@ class ChipTradeCog(commands.Cog, name="Chip Trade"):
         self.trade_manager.request_queue.put(PauseQueueCommand(DiscordContext.create(ctx)))
 
     @commands.command()
+    @commands.is_owner()
+    async def screencapture(self, ctx: commands.Context):
+        self.trade_manager.request_queue.put(ScreenCaptureCommand(DiscordContext.create(ctx)))
+
+    @commands.command()
     @in_channel
-    async def topchips(self, ctx: commands.Context):
-        top_chips = self.trade_manager.bot_stats.get_chips_by_trade_count()
+    async def toptrades(self, ctx: commands.Context):
+        top_items = self.trade_manager.bot_stats.get_trades_by_trade_count()
         lines = ["```"]
         count = 0
-        for chip, qty in top_chips:
+        for trade_item, qty in top_items:
             count += 1
             if count >= 20:
                 break
-            lines.append(f"{qty} - {chip.name} {chip.code}")
+            lines.append(f"{qty} - {trade_item}")
         lines.append("```")
         await ctx.message.reply("\n".join(lines))
 
@@ -157,7 +182,33 @@ class ChipTradeCog(commands.Cog, name="Chip Trade"):
 
     @commands.command()
     @in_channel
+    async def trades(self, ctx: commands.Context, member: Optional[discord.Member] = None):
+        if member is None:
+            user_id = ctx.author.id
+        else:
+            user_id = member.id
+        user = self.trade_manager.bot_stats.users.get(user_id)
+        if user is None:
+            if member is None:
+                await ctx.message.reply("You haven't made any trades.")
+            else:
+                await ctx.message.reply(f"{member.display_name} hasn't made any trades.")
+            return
+
+        lines = ["```"]
+        count = 0
+        for chip, qty in user.get_trades_by_trade_count():
+            count += 1
+            if count >= 20:
+                break
+            lines.append(f"{qty} - {chip.name} {chip.code}")
+        lines.append("```")
+        lines.append(f"You've made {user.get_total_trade_count()} total trades for {len(user.chips)} different things.")
+        await ctx.message.reply("\n".join(lines))
+
+    @commands.command()
+    @in_channel
     async def tradecount(self, ctx: commands.Context):
         await ctx.message.reply(
-            f"I've recorded trades for {self.trade_manager.bot_stats.get_total_trade_count()} chips to {self.trade_manager.bot_stats.get_total_user_count()} users."
+            f"I've recorded trades for {self.trade_manager.bot_stats.get_total_trade_count()} things to {self.trade_manager.bot_stats.get_total_user_count()} users."
         )

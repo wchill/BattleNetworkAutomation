@@ -1,3 +1,4 @@
+import collections
 import time
 from typing import Any, Callable, Optional, Tuple
 
@@ -10,19 +11,24 @@ DEFAULT_HOLD_TIME = 80
 class Script:
     def __init__(self, controller: Controller):
         self.controller = controller
+        self.last_inputs = collections.deque(maxlen=20)
+
+    def _send_cmd(self, command: Command):
+        self.last_inputs.append(command)
+        self.controller.send_cmd(command)
 
     def _press_dpad(self, dpad: DPad, hold_time: int, wait_time: int):
         if wait_time is None or wait_time < 0:
             wait_time = hold_time
-        self.controller.send_cmd(Command().dpad(dpad).hold(hold_time))
-        self.controller.send_cmd(Command().hold(wait_time))
+        self._send_cmd(Command().dpad(dpad).hold(hold_time))
+        self._send_cmd(Command().hold(wait_time))
         self.controller.p_wait((hold_time + wait_time) / 1000.0)
 
     def _press_button(self, button: Button, hold_time: int, wait_time: int):
         if wait_time is None or wait_time < 0:
             wait_time = hold_time
-        self.controller.send_cmd(Command().press(button).hold(hold_time))
-        self.controller.send_cmd(Command().hold(wait_time))
+        self._send_cmd(Command().press(button).hold(hold_time))
+        self._send_cmd(Command().hold(wait_time))
         self.controller.p_wait((hold_time + wait_time) / 1000.0)
 
     @staticmethod
@@ -94,6 +100,7 @@ class Script:
         self._press_button(Button.Home, hold_time, wait_time)
 
     def wait(self, wait_time: int = DEFAULT_HOLD_TIME):
+        self.last_inputs.append(wait_time)
         self.controller.p_wait(wait_time / 1000.0)
 
     @staticmethod
