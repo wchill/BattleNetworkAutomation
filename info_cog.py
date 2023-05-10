@@ -89,19 +89,3 @@ class InfoCog(commands.Cog, name="Info"):
             if part.color == actual_color:
                 text.append(part.name)
         await ctx.message.reply(", ".join(text))
-
-    """
-    @commands.command()
-    async def chip(self, ctx: commands.Context, chip_name: str):
-        if chip_code == "*":
-            actual_chip_code = Code.Star
-        else:
-            actual_chip_code = Code[chip_code.upper()]
-
-        lines = ["```"]
-        for chip in ChipList.ALL_CHIPS:
-            if chip.code == actual_chip_code:
-                lines.append(str(chip))
-        lines.append("```")
-        await ctx.message.reply("\n".join(lines))
-    """

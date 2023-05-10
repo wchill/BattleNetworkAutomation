@@ -9,6 +9,8 @@ import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import discord
+
 from auto_trader import AutoTrader, DiscordContext, RoomCodeMessage, TradeResult
 from bn_automation import image_processing
 from bn_automation.controller import Controller
@@ -86,7 +88,12 @@ class ScreenCaptureCommand(TradeCommand):
 
 
 class DiscordMessageReplyRequest:
-    def __init__(self, discord_context: DiscordContext, message: Optional[str], reaction: Optional[MessageReaction]):
+    def __init__(
+        self,
+        discord_context: DiscordContext,
+        message: Optional[Union[str, Dict[str, Any]]],
+        reaction: Optional[MessageReaction],
+    ):
         self.discord_context = discord_context
         self.message = message
         self.reaction = reaction
@@ -146,8 +153,8 @@ class BotTradeStats:
         sorted_users = sorted(all_users, key=lambda user: user.get_total_trade_count(), reverse=True)
         return sorted_users
 
-    def get_trades_by_trade_count(self) -> List[Tuple[Chip, int]]:
-        all_items: Dict[Chip, int] = collections.defaultdict(int)
+    def get_trades_by_trade_count(self) -> List[Tuple[Union[Chip, NaviCustPart], int]]:
+        all_items: Dict[Union[Chip, NaviCustPart], int] = collections.defaultdict(int)
         for user in self.users.values():
             for trade_item in user.trades:
                 all_items[trade_item] += user.trades[trade_item]
@@ -304,21 +311,24 @@ class TradeManager:
             )
         else:
             current_userid = self._current_userid.value
+
+            embed = discord.Embed(title="Current queue")
+            lines = []
             count = 0
-            lines = ["```"]
             for _, request in cached_queue.items():
-                count += 1
                 if count > 10:
                     break
                 if current_userid == request.user_id:
-                    lines.append(
-                        f"{count}. [IN PROGRESS] {request.user_name} ({request.user_id}) - {request.trade_item}"
+                    embed.add_field(
+                        name="In progress", value=f"{request.user_name} ({request.user_id}) - {request.trade_item}"
                     )
                 else:
+                    count += 1
                     lines.append(f"{count}. {request.user_name} ({request.user_id}) - {request.trade_item}")
-            lines.append("```")
-            lines.append(f"Total requests in queue: {len(cached_queue)}")
-            message_queue.put(DiscordMessageReplyRequest(command.discord_context, "\n".join(lines), None))
+
+            embed.add_field(name="Queue", value="\n".join(lines) if lines else "No queued trades", inline=False)
+            embed.set_footer(text=f"Total requests in queue: {len(cached_queue)}")
+            message_queue.put(DiscordMessageReplyRequest(command.discord_context, embed.to_dict(), None))
 
     def process_commands(
         self,

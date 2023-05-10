@@ -101,7 +101,7 @@ class NaviCustPart:
     def __eq__(self, other) -> bool:
         if other is None:
             return False
-        return self.__dict__ == other.__dict__
+        return self.internal_id == other.internal_id
 
     @classmethod
     def make(cls, ncp_dict: Dict[str, Any], internal_id: int) -> "NaviCustPart":

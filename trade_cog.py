@@ -6,7 +6,7 @@ import threading
 from typing import Optional
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from auto_trader import DiscordContext, RoomCodeMessage
 from chip_list import ChipList
@@ -16,6 +16,7 @@ from trade_manager import (
     ClearQueueCommand,
     DiscordMessageReplyRequest,
     ListQueueCommand,
+    MessageReaction,
     PauseQueueCommand,
     RequestCommand,
     ScreenCaptureCommand,
@@ -41,6 +42,22 @@ class TradeCog(commands.Cog, name="Trade"):
     def __init__(self, bot: commands.Bot, trade_manager: TradeManager):
         self.bot = bot
         self.trade_manager = trade_manager
+        self.change_status.start()
+
+    @tasks.loop(seconds=300)
+    async def change_status(self):
+        await self.bot.change_presence(
+            status=discord.Status.online,
+            activity=discord.Activity(
+                type=discord.ActivityType.playing,
+                name="MegaMan Battle Network Legacy Collection",
+                url="https://discord.com/invite/u9ZRNTDbcz",
+                application_id=1099988580463546408,
+                state="Trading",
+                details=f"{self.trade_manager.bot_stats.get_total_trade_count()} trades to {self.trade_manager.bot_stats.get_total_user_count()} users",
+                assets={"large_image": "legacy_collection"},
+            ),
+        )
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -54,8 +71,11 @@ class TradeCog(commands.Cog, name="Trade"):
         if message_request.reaction:
             await discord_message.add_reaction(message_request.reaction.value)
 
-        if message_request.message:
+        if isinstance(message_request.message, str):
             await discord_message.reply(message_request.message)
+        elif isinstance(message_request.message, dict):
+            embed = discord.Embed.from_dict(message_request.message)
+            await discord_message.reply(embed=embed)
 
     def handle_message_requests(self):
         while True:
@@ -105,6 +125,7 @@ class TradeCog(commands.Cog, name="Trade"):
         chip = ChipList.get_tradable_chip(item_name, item_variant)
         ncp = NaviCustPartList.get_ncp(item_name, item_variant)
         if chip is None and ncp is None:
+            await ctx.message.add_reaction(MessageReaction.ERROR.value)
             await ctx.message.reply("That's not a tradable chip or NaviCust part. Make sure to use in-game spelling.")
         else:
             self.trade_manager.request_queue.put(RequestCommand(DiscordContext.create(ctx), chip or ncp))
@@ -113,11 +134,13 @@ class TradeCog(commands.Cog, name="Trade"):
     @in_channel
     async def cancel(self, ctx: commands.Context, user_id: Optional[int] = None):
         if not self.bot.is_owner(ctx.author):
+            await ctx.message.add_reaction(MessageReaction.ERROR.value)
             await ctx.message.reply("This command is temporarily disabled.")
             return
 
         if user_id is not None:
             if not await self.bot.is_owner(ctx.author):
+                await ctx.message.add_reaction(MessageReaction.ERROR.value)
                 await ctx.message.reply("You can only cancel your own requests.")
             else:
                 self.trade_manager.request_queue.put(
@@ -152,21 +175,24 @@ class TradeCog(commands.Cog, name="Trade"):
     @in_channel
     async def toptrades(self, ctx: commands.Context):
         top_items = self.trade_manager.bot_stats.get_trades_by_trade_count()
-        lines = ["```"]
+        lines = []
         count = 0
         for trade_item, qty in top_items:
             count += 1
             if count >= 20:
                 break
-            lines.append(f"{qty} - {trade_item}")
-        lines.append("```")
-        await ctx.message.reply("\n".join(lines))
+            lines.append(f"{count}. {trade_item} x{qty}")
+
+        embed = discord.Embed(title="Top trades")
+        embed.add_field(name="Top trades", value="\n".join(lines), inline=False)
+        await ctx.message.reply(embed=embed)
 
     @commands.command()
     @in_channel
     async def topusers(self, ctx: commands.Context):
         top_users = self.trade_manager.bot_stats.get_users_by_trade_count()
-        lines = ["```"]
+
+        lines = []
         count = 0
         for user in top_users:
             count += 1
@@ -175,10 +201,16 @@ class TradeCog(commands.Cog, name="Trade"):
             discord_user = await self.bot.fetch_user(user.user_id)
             if discord_user is not None:
                 lines.append(
-                    f"{user.get_total_trade_count()} - {discord_user.display_name or discord_user.name or discord_user.id}"
+                    f"{count}. {discord_user.display_name or discord_user.name or discord_user.id} - {user.get_total_trade_count()} trades"
                 )
-        lines.append("```")
-        await ctx.message.reply("\n".join(lines))
+            else:
+                if discord_user is not None:
+                    lines.append(f"{count}. {user.user_id} - {user.get_total_trade_count()} trades")
+
+        embed = discord.Embed(title="Top users by trade count")
+        embed.add_field(name="Top users", value="\n".join(lines), inline=False)
+        embed.set_footer(text=f"{len(top_users)} users total")
+        await ctx.message.reply(embed=embed)
 
     @commands.command()
     @in_channel
@@ -195,16 +227,19 @@ class TradeCog(commands.Cog, name="Trade"):
                 await ctx.message.reply(f"{member.display_name} hasn't made any trades.")
             return
 
-        lines = ["```"]
+        discord_user = member or ctx.author
+        lines = []
         count = 0
         for chip, qty in user.get_trades_by_trade_count():
             count += 1
             if count >= 20:
                 break
-            lines.append(f"{qty} - {chip.name} {chip.code}")
-        lines.append("```")
-        lines.append(f"You've made {user.get_total_trade_count()} total trades for {len(user.chips)} different things.")
-        await ctx.message.reply("\n".join(lines))
+            lines.append(f"{count}. {chip.name} {chip.code} x{qty}")
+
+        embed = discord.Embed(title=f"{discord_user.display_name}'s trades")
+        embed.add_field(name="Top trades", value="\n".join(lines), inline=False)
+        embed.set_footer(text=f"{user.get_total_trade_count()} trades for {len(user.trades)} different things")
+        await ctx.message.reply(embed=embed)
 
     @commands.command()
     @in_channel

@@ -18,46 +18,16 @@ discord_config = config["discord"]
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix=discord_config["prefix"], owner_id=174603401479323649, intents=intents)
+bot = commands.Bot(
+    command_prefix=discord_config["prefix"],
+    owner_ids=set(int(admin_id) for admin_id in discord_config["admin_ids"]),
+    intents=intents,
+)
 
 
 @bot.event
 async def on_ready():
     print(f"Connected to {len(bot.guilds)} servers")
-
-
-"""
-@bot.command()
-async def screencap(ctx, filename):
-    if ctx.author.id not in admin_ids:
-        return
-    if auto_trader is None:
-        await ctx.send("Trader not active")
-        return
-
-    auto_trader.screen_capture(filename)
-    await ctx.message.reply("Done")
-
-@bot.command()
-async def reset(ctx):
-    if ctx.author.id not in admin_ids:
-        return
-    if auto_trader is None:
-        await ctx.send("Trader not active")
-        return
-
-    auto_trader.reset()
-    await ctx.message.reply("Done")
-
-@bot.command()
-async def restart(ctx):
-    global t
-    if ctx.author.id not in admin_ids:
-        return
-    t = threading.Thread(target=auto_trader.process_queue, daemon=True)
-    t.start()
-    await ctx.message.reply("Done")
-"""
 
 
 def main():
