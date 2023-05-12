@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 import multiprocessing
 import time
@@ -18,6 +19,7 @@ from navicust_part import NaviCustPart
 from navicust_part_list import NaviCustPartList
 
 T = TypeVar("T")
+logger = logging.getLogger(__file__)
 
 
 class DiscordContext:
@@ -224,7 +226,7 @@ class AutoTrader(Script):
         # Next
         self.a()
 
-        print("Waiting for chip select")
+        logger.debug("Waiting for chip select")
         return self.wait_for_text(lambda ocr_text: ocr_text == "Sort : ID", (1054, 205), (162, 48), 10)
 
     def navigate_to_ncp_trade_screen(self) -> bool:
@@ -247,7 +249,7 @@ class AutoTrader(Script):
         # Next
         self.a()
 
-        print("Waiting for ncp select")
+        logger.debug("Waiting for ncp select")
         return self.wait_for_text(
             lambda ocr_text: ocr_text == "SuprArmr", (1080, 270), (200, 60), timeout=10, invert=False
         )
@@ -314,7 +316,7 @@ class AutoTrader(Script):
         trade_cancelled: multiprocessing.Event,
         image_send_queue: multiprocessing.JoinableQueue,
     ) -> Tuple[TradeResult, Union[bytes, str]]:
-        print(f"Trading {str(trade_item)}")
+        logger.info(f"Trading {str(trade_item)}")
 
         self.last_inputs.clear()
 
@@ -334,13 +336,13 @@ class AutoTrader(Script):
             return TradeResult.Cancelled, "Trade cancelled by user."
 
         self.a()
-        self.a(wait_time=3000)
+        self.a()
 
-        print("Waiting for room code")
+        logger.debug("Waiting for room code")
         if not self.wait_for_text(lambda ocr_text: ocr_text.startswith("Room Code: "), (1242, 89), (365, 54), 15):
             return TradeResult.UnexpectedState, "Unable to retrieve room code."
 
-        frame = image_processing.capture()
+        frame = image_processing.capture(convert=True)
         room_code_image = image_processing.crop_to_bounding_box(frame, (1242, 89), (400, 80), invert=True)
         image_bytestring = image_processing.convert_image_to_png_bytestring(room_code_image)
 
@@ -349,32 +351,33 @@ class AutoTrader(Script):
         image_send_queue.join()
 
         start_time = time.time()
-        print("Waiting 180s for user")
+        logger.debug("Waiting 180s for user")
         while time.time() < start_time + 180:
             if self.check_for_cancel(trade_cancelled, cancel_trade_for_user_id, discord_context.user_id):
                 self.b(wait_time=1000)
                 self.a(wait_time=1000)
-                print("Cancelling trade within timeout period")
+                logger.info("Cancelling trade because user didn't respond within 180 seconds")
                 return TradeResult.Cancelled, "Trade cancelled by user."
             elif (
                 image_processing.run_tesseract_line(image_processing.capture(), (660, 440), (620, 50))
                 == "A communication error occurred."
             ):
+                logger.warning("Communication error, restarting trade")
+                self.wait(1000)
                 self.a(wait_time=1000)
-                print("Communication error, restarting")
                 return TradeResult.CommunicationError, "There was a communication error. Retrying."
             else:
                 text = image_processing.run_tesseract_line(image_processing.capture(), (785, 123), (160, 60))
                 if text == "1/15":
-                    print("User joined lobby")
+                    logger.debug("User joined lobby")
                     self.wait(500)
                     self.a(wait_time=1000)
                     self.a()
-                    print("User completed trade")
+                    logger.debug("User completed trade")
                     if self.wait_for_text(lambda ocr_text: ocr_text == "Trade complete!", (815, 440), (310, 55), 20):
                         self.a(wait_time=1000)
                         if self.wait_for_text(lambda ocr_text: ocr_text == "NETWORK", (55, 65), (225, 50), 10):
-                            print("Back at main menu")
+                            logger.debug("Back at main menu")
                             self.wait(2000)
                             return TradeResult.Success, "Trade successful."
                         else:

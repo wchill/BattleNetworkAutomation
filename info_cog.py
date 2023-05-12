@@ -21,6 +21,10 @@ class InfoCog(commands.Cog, name="Info"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("Info cog successfully loaded")
+
     @commands.command()
     async def chipcode(self, ctx: commands.Context, chip_code: str):
         if chip_code == "*":
@@ -89,3 +93,7 @@ class InfoCog(commands.Cog, name="Info"):
             if part.color == actual_color:
                 text.append(part.name)
         await ctx.message.reply(", ".join(text))
+
+
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(InfoCog(bot))

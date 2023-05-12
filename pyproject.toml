@@ -7,17 +7,19 @@ authors = [
     {name = "wchill"}
 ]
 description = "Automation for Battle Network Legacy Collection"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 version = "1.0"
 dependencies = [
+    "discord.py",
+    "functionfs",
+    "libevdev",
     "numpy",
     "opencv-contrib-python",
     "opencv-python",
+    "psutil",
+    "py-cpuinfo",
     "pytesseract",
-    "functionfs",
-    "libevdev",
-    "pyudev",
-    "discord.py"
+    "pyudev"
 ]
 
 [project.scripts]
@@ -29,9 +31,9 @@ platforms = ["linux"]
 
 [tool.black]
 line-length = 120
-target-version = ['py37']
+target-version = ['py38']
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
-py_version = 37
+py_version = 38

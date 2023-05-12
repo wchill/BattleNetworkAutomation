@@ -1,34 +1,26 @@
 from __future__ import annotations
 
 import collections
+import json
 import logging
 import multiprocessing
+import os
 import pickle
 import queue
 import time
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import discord
 
 from auto_trader import AutoTrader, DiscordContext, RoomCodeMessage, TradeResult
 from bn_automation import image_processing
-from bn_automation.controller import Controller
+from bn_automation.controller import Button, Controller
 from bn_automation.controller.sinks import SocketSink
 from chip import Chip
 from navicust_part import NaviCustPart
+from utils import MessageReaction
 
 logger = logging.getLogger(__name__)
-
-
-class MessageReaction(Enum):
-    OK = "✅"
-    ERROR = "❌"
-
-
-class ScreenCaptureMessage:
-    def __init__(self, image: bytes):
-        self.image = image
 
 
 class TradeCommand:
@@ -166,12 +158,14 @@ class BotTradeStats:
 class TradeManager:
     def __init__(
         self,
-        request_queue: multiprocessing.Queue[TradeCommand],
-        image_send_queue: multiprocessing.JoinableQueue[Union[RoomCodeMessage, ScreenCaptureMessage]],
-        message_queue: multiprocessing.SimpleQueue[DiscordMessageReplyRequest],
+        server: Tuple[str, int],
+        request_queue: multiprocessing.Queue[Optional[TradeCommand]],
+        image_send_queue: multiprocessing.JoinableQueue[Optional[RoomCodeMessage]],
+        message_queue: multiprocessing.SimpleQueue[Optional[DiscordMessageReplyRequest]],
     ):
+        self.server = server
         self._queue_lock = multiprocessing.RLock()
-        self._queued_trades: multiprocessing.Queue[RequestCommand] = multiprocessing.Queue()
+        self._queued_trades: multiprocessing.Queue[Optional[RequestCommand]] = multiprocessing.Queue()
         self._request_queued = multiprocessing.Condition()
 
         self._current_userid = multiprocessing.Value("Q")
@@ -186,6 +180,14 @@ class TradeManager:
 
         self._bot_stats = self.bot_stats
 
+        self._commands_process: Optional[multiprocessing.Process] = None
+        self._trade_queue_process: Optional[multiprocessing.Process] = None
+
+        with open(os.path.join(os.path.dirname(__file__), "common_items.json"), "r") as f:
+            self.common_items = set(json.load(f))
+
+        multiprocessing.log_to_stderr(logging.DEBUG)
+
     @property
     def bot_stats(self) -> BotTradeStats:
         try:
@@ -198,16 +200,25 @@ class TradeManager:
         completion_recv, completion_send = multiprocessing.Pipe(duplex=False)
         cancel_recv, cancel_send = multiprocessing.Pipe(duplex=False)
 
-        multiprocessing.Process(
+        p1 = multiprocessing.Process(
             target=self.process_commands,
             args=(self.request_queue, self.message_queue, completion_recv, cancel_send),
             daemon=True,
-        ).start()
-        multiprocessing.Process(
+        )
+        p2 = multiprocessing.Process(
             target=self.process_trade_queue,
             args=(self.image_send_queue, self.message_queue, completion_send, cancel_recv),
             daemon=True,
-        ).start()
+        )
+        p1.start()
+        p2.start()
+        self._commands_process = p1
+        self._trade_queue_process = p2
+
+    def stop(self):
+        self.request_queue.put(None)
+        self._commands_process.join()
+        self._trade_queue_process.join()
 
     def process_cancellation(
         self,
@@ -294,6 +305,14 @@ class TradeManager:
                         MessageReaction.ERROR,
                     )
                 )
+            elif len(cached_queue) > 20 and str(command.trade_item) in self.common_items:
+                message_queue.put(
+                    DiscordMessageReplyRequest(
+                        command.discord_context,
+                        f"{command.trade_item} cannot be requested when there are more than 20 people in the queue. Try asking someone to dupe it for you!",
+                        MessageReaction.ERROR,
+                    )
+                )
             else:
                 cached_queue[command.user_id] = command
                 self._queued_trades.put(command)
@@ -315,17 +334,22 @@ class TradeManager:
             embed = discord.Embed(title="Current queue")
             lines = []
             count = 0
+            in_progress = None
             for _, request in cached_queue.items():
-                if count > 10:
+                if count >= 10:
                     break
                 if current_userid == request.user_id:
-                    embed.add_field(
-                        name="In progress", value=f"{request.user_name} ({request.user_id}) - {request.trade_item}"
-                    )
+                    in_progress = request
                 else:
                     count += 1
                     lines.append(f"{count}. {request.user_name} ({request.user_id}) - {request.trade_item}")
 
+            embed.add_field(
+                name="In progress",
+                value=f"{in_progress.user_name} ({in_progress.user_id}) - {in_progress.trade_item}"
+                if in_progress
+                else "No one",
+            )
             embed.add_field(name="Queue", value="\n".join(lines) if lines else "No queued trades", inline=False)
             embed.set_footer(text=f"Total requests in queue: {len(cached_queue)}")
             message_queue.put(DiscordMessageReplyRequest(command.discord_context, embed.to_dict(), None))
@@ -338,22 +362,26 @@ class TradeManager:
         cancel_send: Any,
     ):
         cached_queue: Dict[int, RequestCommand] = {}
+
         try:
             with open("queue.pkl", "rb") as f:
-                saved_requests = pickle.load(f)
-        except Exception:
-            saved_requests = {}
-
-        for saved_request in saved_requests.values():
-            cached_queue[saved_request.user_id] = saved_request
-            self._queued_trades.put(saved_request)
+                cached_queue = pickle.load(f)
+                for _, command in cached_queue.items():
+                    self._queued_trades.put(command)
+            os.unlink("queue.pkl")
+        except FileNotFoundError:
+            pass
 
         while True:
             try:
                 command = None
                 while command is None:
                     try:
-                        command = request_queue.get(timeout=0.1)
+                        command = request_queue.get(timeout=1.0)
+                        if command is None:
+                            print("Shutdown requested, notifying other process")
+                            self._queued_trades.put(None)
+                            return
                     except queue.Empty:
                         pass
 
@@ -367,36 +395,30 @@ class TradeManager:
 
                             with open("bot_stats.pkl", "wb") as f:
                                 pickle.dump(self._bot_stats, f)
-                            with open("queue.pkl", "wb") as f:
-                                pickle.dump(cached_queue, f)
                         except KeyError:
                             print(f"Tried to pop {user_id} from cached queue but it didn't exist!")
 
                 if isinstance(command, CancelCommand):
                     self.process_cancellation(command, message_queue, cached_queue, cancel_send)
-                    with open("queue.pkl", "wb") as f:
-                        pickle.dump(cached_queue, f)
                 elif isinstance(command, RequestCommand):
                     self.process_trade_request(command, message_queue, cached_queue)
-                    with open("queue.pkl", "wb") as f:
-                        pickle.dump(cached_queue, f)
                 elif isinstance(command, ListQueueCommand):
                     self.process_list_queue_request(command, message_queue, cached_queue)
                 elif isinstance(command, ClearQueueCommand):
                     self.process_clear_queue_request(command, message_queue, cached_queue, cancel_send)
-                    with open("queue.pkl", "wb") as f:
-                        pickle.dump(cached_queue, f)
                 elif isinstance(command, PauseQueueCommand):
                     with self._queue_lock:
-                        message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
                         with open("queue.pkl", "wb") as f:
                             pickle.dump(cached_queue, f)
+                        message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
                         command = request_queue.get()
                         while not isinstance(command, PauseQueueCommand):
                             command = request_queue.get()
+                        try:
+                            os.unlink("queue.pkl")
+                        except FileNotFoundError:
+                            pass
                     message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
-                    with open("queue.pkl", "wb") as f:
-                        pickle.dump(cached_queue, f)
                 elif isinstance(command, ScreenCaptureCommand):
                     self._screencap_requested.clear()
                     self._screencap_requested.wait()
@@ -410,42 +432,55 @@ class TradeManager:
 
     def process_trade_queue(
         self,
-        image_send_queue: multiprocessing.JoinableQueue[Union[RoomCodeMessage, ScreenCaptureMessage]],
+        image_send_queue: multiprocessing.JoinableQueue[RoomCodeMessage],
         message_queue: multiprocessing.SimpleQueue[DiscordMessageReplyRequest],
         completion_send: Any,
         cancel_recv: Any,
     ):
-        with SocketSink("raspberrypi.local", 3000) as sink:
+        with SocketSink(self.server[0], self.server[1]) as sink:
             controller = Controller(sink)
             trader = AutoTrader(controller)
 
             cancelled_requests = set()
+            # Let the screen pop up if needed
+            controller.press_button(Button.Nothing, wait_ms=2000)
+            if (
+                image_processing.run_tesseract_line(image_processing.capture(), (1000, 1000), (460, 460))
+                == "Controller Not Connecting"
+            ):
+                print("Found controller connect screen, connecting")
+                controller.press_button(Button.L + Button.R, hold_ms=100, wait_ms=2000)
+                controller.press_button(Button.A, hold_ms=100, wait_ms=2000)
 
             while True:
                 try:
-                    current_trade = None
-                    while current_trade is None:
+                    while True:
                         # Receive all cancellation requests
                         while cancel_recv.poll():
                             cancelled_requests.add(cancel_recv.recv())
 
                         # Get screen capture if requested
                         if not self._screencap_requested.is_set():
-                            img = image_processing.convert_image_to_png_bytestring(image_processing.capture())
-                            image_send_queue.put(ScreenCaptureMessage(img))
+                            img = image_processing.convert_image_to_png_bytestring(
+                                image_processing.capture(convert=True)
+                            )
+                            # image_send_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
                             self._screencap_requested.set()
 
                         try:
                             with self._queue_lock, self._cancel_trade_for_userid.get_lock():
                                 current_trade = self._queued_trades.get_nowait()
 
+                                if current_trade is None:
+                                    print("Shutdown requested, exiting")
+                                    return
                                 # Process cancellation requests
-                                if current_trade.user_id in cancelled_requests:
+                                elif current_trade.user_id in cancelled_requests:
                                     cancelled_requests.remove(current_trade.user_id)
-                                    current_trade = None
                                     continue
 
                                 self._cancel_trade_for_userid.value = 0
+                                break
                         except queue.Empty:
                             # Keep the Switch awake
                             trader.x()
@@ -470,11 +505,14 @@ class TradeManager:
                                 image_send_queue,
                             )
                         if result == TradeResult.UnexpectedState:
-                            message_with_inputs = (
-                                message + "\n\nLast inputs:\n```" + "\n".join(trader.get_last_inputs()) + "\n```"
-                            )
+                            embed = discord.Embed(title="Trade failure!", description=message, color=0xFF0000)
+                            embed.add_field(name="Last inputs", value="\n".join(trader.get_last_inputs()), inline=False)
+                            message_dict = embed.to_dict()
+                            image = image_processing.capture(convert=True)
+                            png_image = image_processing.convert_image_to_png_bytestring(image)
+                            message_dict["image"] = png_image
                             message_queue.put(
-                                DiscordMessageReplyRequest(current_trade.discord_context, message_with_inputs, None)
+                                DiscordMessageReplyRequest(current_trade.discord_context, message_dict, None)
                             )
                         elif result == TradeResult.CommunicationError:
                             message_queue.put(DiscordMessageReplyRequest(current_trade.discord_context, message, None))

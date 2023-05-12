@@ -24,6 +24,7 @@ class SocketSink(ControllerSink):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print(f"Connecting to {self.ip}:{self.port}")
         self.sock.connect((self.ip, self.port))
+        print(f"Connected to {self.ip}:{self.port}")
 
         # wait for connection
         while True:

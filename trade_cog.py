@@ -1,6 +1,8 @@
 import asyncio
+import concurrent.futures
 import io
 import json
+import multiprocessing
 import os
 import threading
 from typing import Optional
@@ -16,13 +18,11 @@ from trade_manager import (
     ClearQueueCommand,
     DiscordMessageReplyRequest,
     ListQueueCommand,
-    MessageReaction,
     PauseQueueCommand,
     RequestCommand,
-    ScreenCaptureCommand,
-    ScreenCaptureMessage,
     TradeManager,
 )
+from utils import MessageReaction
 
 with open(os.path.join(os.path.dirname(__file__), "config.json"), "r") as f:
     config = json.load(f)
@@ -42,27 +42,37 @@ class TradeCog(commands.Cog, name="Trade"):
     def __init__(self, bot: commands.Bot, trade_manager: TradeManager):
         self.bot = bot
         self.trade_manager = trade_manager
-        self.change_status.start()
+        self._message_req_thread = None
+        self._image_req_thread = None
 
-    @tasks.loop(seconds=300)
+    @tasks.loop(seconds=60)
     async def change_status(self):
-        await self.bot.change_presence(
-            status=discord.Status.online,
-            activity=discord.Activity(
-                type=discord.ActivityType.playing,
-                name="MegaMan Battle Network Legacy Collection",
-                url="https://discord.com/invite/u9ZRNTDbcz",
-                application_id=1099988580463546408,
-                state="Trading",
-                details=f"{self.trade_manager.bot_stats.get_total_trade_count()} trades to {self.trade_manager.bot_stats.get_total_user_count()} users",
-                assets={"large_image": "legacy_collection"},
-            ),
-        )
+        # url="https://discord.com/invite/u9ZRNTDbcz",
+        if self.bot.is_ready():
+            await self.bot.change_presence(
+                status=discord.Status.online,
+                activity=discord.Streaming(
+                    name=f"{self.trade_manager.bot_stats.get_total_trade_count()} trades to {self.trade_manager.bot_stats.get_total_user_count()} users",
+                    url="https://discord.com/invite/u9ZRNTDbcz",
+                ),
+            )
 
     @commands.Cog.listener()
     async def on_ready(self):
-        threading.Thread(target=self.handle_message_requests, daemon=True).start()
-        threading.Thread(target=self.handle_image_message_requests, daemon=True).start()
+        print("Trade cog successfully loaded")
+
+    async def cog_load(self) -> None:
+        self._message_req_thread = threading.Thread(target=self.handle_message_requests, daemon=True)
+        self._image_req_thread = threading.Thread(target=self.handle_image_message_requests, daemon=True)
+        self._message_req_thread.start()
+        self._image_req_thread.start()
+        self.trade_manager.start_processing()
+        self.change_status.start()
+
+    async def cog_unload(self) -> None:
+        print("Unloading cog")
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        await self.bot.loop.run_in_executor(executor, self.trade_manager.stop)
 
     async def reply_to_command(self, message_request: DiscordMessageReplyRequest):
         discord_channel = self.bot.get_channel(message_request.discord_context.channel_id)
@@ -74,8 +84,18 @@ class TradeCog(commands.Cog, name="Trade"):
         if isinstance(message_request.message, str):
             await discord_message.reply(message_request.message)
         elif isinstance(message_request.message, dict):
+            if "image" in message_request.message:
+                image = message_request.message.pop("image")
+            else:
+                image = None
             embed = discord.Embed.from_dict(message_request.message)
-            await discord_message.reply(embed=embed)
+            attach = discord.File(fp=io.BytesIO(image), filename="screencapture.png")
+            embed.set_image(url="attachment://screencapture.png")
+
+            if image is not None:
+                await discord_message.reply(embed=embed, file=attach)
+            else:
+                await discord_message.reply(embed=embed)
 
     def handle_message_requests(self):
         while True:
@@ -96,7 +116,7 @@ class TradeCog(commands.Cog, name="Trade"):
             file=discord.File(fp=io.BytesIO(room_code_request.image), filename="roomcode.png"),
         )
 
-    async def message_screenshot(self, message_request: ScreenCaptureMessage):
+    async def message_screenshot(self, message_request: DiscordMessageReplyRequest):
         user = await self.bot.fetch_user(self.bot.owner_id)
         await user.send(
             f"Screencapture",
@@ -110,8 +130,6 @@ class TradeCog(commands.Cog, name="Trade"):
                 image_request = self.trade_manager.image_send_queue.get()
                 if isinstance(image_request, RoomCodeMessage):
                     asyncio.run_coroutine_threadsafe(self.message_room_code(image_request), self.bot.loop)
-                elif isinstance(image_request, ScreenCaptureMessage):
-                    asyncio.run_coroutine_threadsafe(self.message_screenshot(image_request), self.bot.loop)
             except Exception:
                 import traceback
 
@@ -131,9 +149,27 @@ class TradeCog(commands.Cog, name="Trade"):
             self.trade_manager.request_queue.put(RequestCommand(DiscordContext.create(ctx), chip or ncp))
 
     @commands.command()
+    @commands.is_owner()
+    @in_channel
+    async def requestfor(self, ctx: commands.Context, user: discord.User, item_name: str, item_variant: str):
+        chip = ChipList.get_tradable_chip(item_name, item_variant)
+        ncp = NaviCustPartList.get_ncp(item_name, item_variant)
+        if chip is None and ncp is None:
+            await ctx.message.add_reaction(MessageReaction.ERROR.value)
+            await ctx.message.reply("That's not a tradable chip or NaviCust part. Make sure to use in-game spelling.")
+        else:
+            context = DiscordContext(
+                user.display_name,
+                user.id,
+                ctx.message.id,
+                ctx.channel.id,
+            )
+            self.trade_manager.request_queue.put(RequestCommand(context, chip or ncp))
+
+    @commands.command()
     @in_channel
     async def cancel(self, ctx: commands.Context, user_id: Optional[int] = None):
-        if not self.bot.is_owner(ctx.author):
+        if not await self.bot.is_owner(ctx.author):
             await ctx.message.add_reaction(MessageReaction.ERROR.value)
             await ctx.message.reply("This command is temporarily disabled.")
             return
@@ -166,10 +202,10 @@ class TradeCog(commands.Cog, name="Trade"):
     async def pause(self, ctx: commands.Context):
         self.trade_manager.request_queue.put(PauseQueueCommand(DiscordContext.create(ctx)))
 
-    @commands.command()
+    """@commands.command()
     @commands.is_owner()
     async def screencapture(self, ctx: commands.Context):
-        self.trade_manager.request_queue.put(ScreenCaptureCommand(DiscordContext.create(ctx)))
+        self.trade_manager.request_queue.put(ScreenCaptureCommand(DiscordContext.create(ctx)))"""
 
     @commands.command()
     @in_channel
@@ -247,3 +283,12 @@ class TradeCog(commands.Cog, name="Trade"):
         await ctx.message.reply(
             f"I've recorded trades for {self.trade_manager.bot_stats.get_total_trade_count()} things to {self.trade_manager.bot_stats.get_total_user_count()} users."
         )
+
+
+async def setup(bot: commands.Bot) -> None:
+    request_queue = multiprocessing.Queue()
+    image_send_queue = multiprocessing.JoinableQueue()
+    message_queue = multiprocessing.SimpleQueue()
+    # utils.wait_port("localhost", 3000)
+    trade_manager = TradeManager(("raspberrypi.local", 3000), request_queue, image_send_queue, message_queue)
+    await bot.add_cog(TradeCog(bot, trade_manager))

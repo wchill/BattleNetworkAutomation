@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import json
-import multiprocessing
 import os
 
 import discord
 from discord.ext import commands
 
-from info_cog import InfoCog
-from trade_cog import TradeCog
-from trade_manager import TradeManager
+import utils
+from utils import MessageReaction
+
+COGS = ["info_cog", "admin_cog", "trade_cog"]
+
 
 with open(os.path.join(os.path.dirname(__file__), "config.json"), "r") as f:
     config = json.load(f)
@@ -30,21 +31,38 @@ async def on_ready():
     print(f"Connected to {len(bot.guilds)} servers")
 
 
-def main():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+@bot.command()
+@commands.is_owner()
+async def reloadcog(ctx: commands.Context, cog_name: str):
+    try:
+        await bot.reload_extension(cog_name)
+        await ctx.message.add_reaction(MessageReaction.OK.value)
+    except Exception as e:
+        await ctx.message.add_reaction(MessageReaction.ERROR.value)
+        await ctx.message.reply(f"Error when reloading {cog_name}: {e}")
 
-    request_queue = multiprocessing.Queue()
-    image_send_queue = multiprocessing.JoinableQueue()
-    message_queue = multiprocessing.SimpleQueue()
 
-    trade_manager = TradeManager(request_queue, image_send_queue, message_queue)
-    trade_manager.start_processing()
+@bot.command()
+@commands.is_owner()
+async def reloadall(ctx: commands.Context):
+    for cog in COGS:
+        try:
+            await bot.reload_extension(cog)
+        except Exception as e:
+            await ctx.message.add_reaction(MessageReaction.ERROR.value)
+            await ctx.message.reply(f"Error when reloading {cog}: {e}")
+            return
+    await ctx.message.add_reaction(MessageReaction.OK.value)
+    cogs_list = '", "'.join(COGS)
+    await ctx.message.reply(f'Successfully reloaded {len(COGS)} cogs: "{cogs_list}"')
 
-    loop.run_until_complete(bot.add_cog(TradeCog(bot, trade_manager)))
-    loop.run_until_complete(bot.add_cog(InfoCog(bot)))
-    bot.run(discord_config["client_secret"])
+
+async def main():
+    utils.wait_port("discord.com", 443)
+    for ext in COGS:
+        await bot.load_extension(ext)
+    await bot.start(discord_config["client_secret"])
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

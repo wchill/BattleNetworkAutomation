@@ -1,11 +1,11 @@
 import os
+import subprocess
 import sys
 from typing import Any, Tuple
 
 import cv2 as cv
 import numpy as np
 import pytesseract
-from pytesseract import Output
 
 DEMONEYE_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "demoneye_1345_25.png"), cv.IMREAD_COLOR)
 RESULT_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "results_365_120.png"), cv.IMREAD_COLOR)
@@ -15,13 +15,40 @@ CONTROLLER_IMG = cv.imread(os.path.join(os.path.dirname(__file__), "images", "co
 
 
 CAPTURE = None
+CAPTURE_DEVICES = [
+    ("/dev/video100", lambda: None, False),
+    ("/dev/hdmi-capture", lambda: subprocess.run(["/usr/bin/v4l2-ctl", "--set-dv-bt-timings", "query"]), True),
+    (0, lambda: None, False),
+]
+CAPTURE_BGR2RGB = False
 
 
-def capture():
-    global CAPTURE
+def capture(convert=False):
+    global CAPTURE, CAPTURE_BGR2RGB
     if CAPTURE is None:
-        CAPTURE = cv.VideoCapture(0)
-    return CAPTURE.read()[1]
+        for device, init_func, should_convert in CAPTURE_DEVICES:
+            print(f"Trying to open {device}")
+            try:
+                init_func()
+                CAPTURE = cv.VideoCapture(device)
+                if not CAPTURE.isOpened():
+                    CAPTURE = None
+                    continue
+                CAPTURE_BGR2RGB = should_convert
+                break
+            except FileNotFoundError:
+                continue
+        if CAPTURE is None:
+            raise RuntimeError("Unable to open video capture device")
+    try:
+        frame = CAPTURE.read()[1]
+        if convert and CAPTURE_BGR2RGB:
+            frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+        return frame
+    except Exception:
+        CAPTURE = None
+        # Try one time to reopen the capture device
+        return capture(convert)
 
 
 def read_zenny(capture: cv.VideoCapture) -> int:
@@ -71,7 +98,10 @@ def crop_image(image, top_left, box_size):
     start_x, start_y = top_left
     end_x = start_x + box_size[0]
     end_y = start_y + box_size[1]
-    return image[start_y:end_y, start_x:end_x]
+    cropped = image[start_y:end_y, start_x:end_x]
+    # print(os.path.join(os.path.dirname(__file__), "..", "..", "temp", "cropped.png"))
+    # cv.imwrite(os.path.join(os.path.dirname(__file__), "..", "..", "temp", "cropped.png"), cropped)
+    return cropped
 
 
 def convert_image_to_png_bytestring(image):
