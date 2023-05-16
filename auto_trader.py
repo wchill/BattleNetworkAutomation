@@ -6,7 +6,7 @@ import multiprocessing
 import time
 from enum import Enum
 from queue import Queue
-from typing import Any, Callable, Dict, Generic, List, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 from discord.ext import commands
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__file__)
 
 
 class DiscordContext:
-    def __init__(self, user_name: str, user_id: int, message_id: int, channel_id: int):
+    def __init__(self, user_name: Optional[str], user_id: Optional[int], message_id: Optional[int], channel_id: int):
         self.user_name = user_name
         self.user_id = user_id
         self.message_id = message_id
@@ -159,7 +159,7 @@ class AutoTrader(Script):
     def calculate_ncp_inputs(self, ncp: NaviCustPart) -> List[Tuple[Union[Button, DPad], Node[NaviCustPart]]]:
         return self.root_ncp_node.search(ncp)
 
-    def reset(self):
+    def reload_save(self):
         self.home(wait_time=1000)
         self.plus(wait_time=1000)
         self.a()
@@ -353,26 +353,41 @@ class AutoTrader(Script):
         start_time = time.time()
         logger.debug("Waiting 180s for user")
         while time.time() < start_time + 180:
+            error = image_processing.run_tesseract_line(image_processing.capture(), (660, 440), (620, 50))
             if self.check_for_cancel(trade_cancelled, cancel_trade_for_user_id, discord_context.user_id):
                 self.b(wait_time=1000)
                 self.a(wait_time=1000)
                 logger.info("Cancelling trade because user didn't respond within 180 seconds")
                 return TradeResult.Cancelled, "Trade cancelled by user."
-            elif (
-                image_processing.run_tesseract_line(image_processing.capture(), (660, 440), (620, 50))
-                == "A communication error occurred."
-            ):
+            elif error == "A communication error occurred.":
                 logger.warning("Communication error, restarting trade")
                 self.wait(1000)
                 self.a(wait_time=1000)
                 return TradeResult.CommunicationError, "There was a communication error. Retrying."
+            elif error == "The guest has already left.":
+                self.wait(12000)
+                self.b(wait_time=1000)
+                self.a(wait_time=1000)
+                return TradeResult.Cancelled, "User left the room, trade cancelled."
             else:
                 text = image_processing.run_tesseract_line(image_processing.capture(), (785, 123), (160, 60))
                 if text == "1/15":
                     logger.debug("User joined lobby")
                     self.wait(500)
                     self.a(wait_time=1000)
+                    error = image_processing.run_tesseract_line(image_processing.capture(), (660, 440), (620, 50))
+                    if error == "The guest has already left.":
+                        self.wait(12000)
+                        self.b(wait_time=1000)
+                        self.a(wait_time=1000)
+                        return TradeResult.Cancelled, "User left the room, trade cancelled."
                     self.a()
+                    error = image_processing.run_tesseract_line(image_processing.capture(), (660, 440), (620, 50))
+                    if error == "The guest has already left.":
+                        self.wait(12000)
+                        self.b(wait_time=1000)
+                        self.a(wait_time=1000)
+                        return TradeResult.Cancelled, "User left the room, trade cancelled."
                     logger.debug("User completed trade")
                     if self.wait_for_text(lambda ocr_text: ocr_text == "Trade complete!", (815, 440), (310, 55), 20):
                         self.a(wait_time=1000)

@@ -30,6 +30,7 @@ class TradeCommand:
     CLEAR_QUEUE = 4
     PAUSE_QUEUE = 5
     SCREEN_CAPTURE = 6
+    LOAD_QUEUE = 7
 
     def __init__(self, command: int, discord_context: DiscordContext, **kwargs: Any):
         self.command = command
@@ -62,6 +63,11 @@ class CancelCommand(TradeCommand):
 class ListQueueCommand(TradeCommand):
     def __init__(self, discord_context: DiscordContext):
         super().__init__(command=TradeCommand.LIST_QUEUE, discord_context=discord_context)
+
+
+class LoadQueueCommand(TradeCommand):
+    def __init__(self, discord_context: DiscordContext):
+        super().__init__(command=TradeCommand.LOAD_QUEUE, discord_context=discord_context)
 
 
 class ClearQueueCommand(TradeCommand):
@@ -162,6 +168,7 @@ class TradeManager:
         request_queue: multiprocessing.Queue[Optional[TradeCommand]],
         image_send_queue: multiprocessing.JoinableQueue[Optional[RoomCodeMessage]],
         message_queue: multiprocessing.SimpleQueue[Optional[DiscordMessageReplyRequest]],
+        queue_update_queue: multiprocessing.SimpleQueue[Tuple[Dict[int, RequestCommand], int]],
     ):
         self.server = server
         self._queue_lock = multiprocessing.RLock()
@@ -177,6 +184,7 @@ class TradeManager:
         self.request_queue = request_queue
         self.image_send_queue = image_send_queue
         self.message_queue = message_queue
+        self.queue_update_queue = queue_update_queue
 
         self._bot_stats = self.bot_stats
 
@@ -309,7 +317,7 @@ class TradeManager:
                 message_queue.put(
                     DiscordMessageReplyRequest(
                         command.discord_context,
-                        f"{command.trade_item} cannot be requested when there are more than 20 people in the queue. Try asking someone to dupe it for you!",
+                        f"{command.trade_item} cannot be requested when there are more than 20 people in the queue. Try asking someone to trade you one in <#1106668170900689016>!",
                         MessageReaction.ERROR,
                     )
                 )
@@ -350,8 +358,21 @@ class TradeManager:
                 if in_progress
                 else "No one",
             )
-            embed.add_field(name="Queue", value="\n".join(lines) if lines else "No queued trades", inline=False)
-            embed.set_footer(text=f"Total requests in queue: {len(cached_queue)}")
+            embed.add_field(
+                name=f"{len(cached_queue)} requests in queue",
+                value="\n".join(lines) if lines else "No queued trades",
+                inline=False,
+            )
+            index = None
+            if command.user_id in cached_queue:
+                for i, user_id in enumerate(cached_queue.keys()):
+                    if user_id == command.user_id:
+                        index = i
+                        break
+            if index is None:
+                embed.set_footer(text="You are not in the queue.")
+            else:
+                embed.set_footer(text=f"Your place in the queue is: {index if in_progress else index + 1}")
             message_queue.put(DiscordMessageReplyRequest(command.discord_context, embed.to_dict(), None))
 
     def process_commands(
@@ -362,16 +383,7 @@ class TradeManager:
         cancel_send: Any,
     ):
         cached_queue: Dict[int, RequestCommand] = {}
-
-        try:
-            with open("queue.pkl", "rb") as f:
-                cached_queue = pickle.load(f)
-                for _, command in cached_queue.items():
-                    self._queued_trades.put(command)
-            os.unlink("queue.pkl")
-        except FileNotFoundError:
-            pass
-
+        failed_requests: List[Tuple[int, RequestCommand]] = []
         while True:
             try:
                 command = None
@@ -387,16 +399,25 @@ class TradeManager:
 
                     # Process all completion notifications and remove them from our cached copy of the queue
                     while completion_recv.poll():
-                        user_id = completion_recv.recv()
+                        user_id, trade_result = completion_recv.recv()
                         try:
                             completed = cached_queue.pop(user_id)
-                            print(f"Completed trade for {user_id}: {completed.trade_item}")
-                            self._bot_stats.add_trade(user_id, completed.trade_item)
+                            if trade_result in [TradeResult.UnexpectedState, TradeResult.ControllerDisconnect]:
+                                failed_requests.append((user_id, completed))
 
-                            with open("bot_stats.pkl", "wb") as f:
-                                pickle.dump(self._bot_stats, f)
+                                with open("failed.pkl", "wb") as f:
+                                    pickle.dump(failed_requests, f)
+                            elif trade_result == TradeResult.Success:
+                                print(f"Completed trade for {user_id}: {completed.trade_item}")
+                                self._bot_stats.add_trade(user_id, completed.trade_item)
+
+                                with open("bot_stats.pkl", "wb") as f:
+                                    pickle.dump(self._bot_stats, f)
                         except KeyError:
                             print(f"Tried to pop {user_id} from cached queue but it didn't exist!")
+
+                    # Signal the bot to update the queue list
+                    self.queue_update_queue.put((cached_queue, self._current_userid.value))
 
                 if isinstance(command, CancelCommand):
                     self.process_cancellation(command, message_queue, cached_queue, cancel_send)
@@ -406,6 +427,26 @@ class TradeManager:
                     self.process_list_queue_request(command, message_queue, cached_queue)
                 elif isinstance(command, ClearQueueCommand):
                     self.process_clear_queue_request(command, message_queue, cached_queue, cancel_send)
+                elif isinstance(command, LoadQueueCommand):
+                    try:
+                        with open("failed.pkl", "rb") as f:
+                            failed = pickle.load(f)
+
+                        for saved_id, saved_command in failed.items():
+                            cached_queue[saved_id] = saved_command
+                            self._queued_trades.put(saved_command)
+                        os.unlink("failed.pkl")
+                    except Exception:
+                        pass
+
+                    with open("queue.pkl", "rb") as f:
+                        q = pickle.load(f)
+
+                    for saved_id, saved_command in q.items():
+                        cached_queue[saved_id] = saved_command
+                        self._queued_trades.put(saved_command)
+
+                    message_queue.put(DiscordMessageReplyRequest(command.discord_context, None, MessageReaction.OK))
                 elif isinstance(command, PauseQueueCommand):
                     with self._queue_lock:
                         with open("queue.pkl", "wb") as f:
@@ -452,6 +493,7 @@ class TradeManager:
                 controller.press_button(Button.L + Button.R, hold_ms=100, wait_ms=2000)
                 controller.press_button(Button.A, hold_ms=100, wait_ms=2000)
 
+            trade_count = 0
             while True:
                 try:
                     while True:
@@ -514,6 +556,9 @@ class TradeManager:
                             message_queue.put(
                                 DiscordMessageReplyRequest(current_trade.discord_context, message_dict, None)
                             )
+                            completion_send.send((current_trade.discord_context.user_id, result))
+                            print("Unexpected state! Exiting")
+                            return
                         elif result == TradeResult.CommunicationError:
                             message_queue.put(DiscordMessageReplyRequest(current_trade.discord_context, message, None))
                             continue
@@ -523,7 +568,12 @@ class TradeManager:
 
                     # Notify the other worker thread of completion
                     self._current_userid.value = 0
-                    completion_send.send(current_trade.discord_context.user_id)
+                    completion_send.send((current_trade.discord_context.user_id, result))
+
+                    trade_count += 1
+                    # if trade_count % 100 == 0:
+                    #     print("Reloading save")
+                    #     trader.reload_save()
 
                 except Exception:
                     import traceback

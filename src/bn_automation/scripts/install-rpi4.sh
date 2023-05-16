@@ -2,8 +2,12 @@
 DIR="$( dirname -- "${BASH_SOURCE[0]}"; )";   # Get the directory name
 DIR="$( realpath -e -- "$DIR"; )";    # Resolve its full path if need be
 
-sudo apt update
-sudo apt install -y raspberrypi-bootloader raspberrypi-kernel raspberrypi-kernel-headers git build-essential vim python3-pip tesseract-ocr ffmpeg cmake
+apt update
+apt install -y raspberrypi-bootloader raspberrypi-kernel raspberrypi-kernel-headers git build-essential vim python3-pip tesseract-ocr ffmpeg cmake lsb-release curl
+
+# install tailscale
+curl -fsSL https://tailscale.com/install.sh | sh
+tailscale up
 
 v4l2version=0.12.7
 xpadversion=0.4

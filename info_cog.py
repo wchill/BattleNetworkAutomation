@@ -1,9 +1,10 @@
 import io
 import json
 import os
+import time
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from chip import Chip, Code
 from chip_list import ChipList
@@ -20,6 +21,7 @@ CHANNEL_IDS = {int(channel_id) for channel_id in discord_config["info_channel_id
 class InfoCog(commands.Cog, name="Info"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.last_beg = time.time() - 600
 
     @commands.Cog.listener()
     async def on_ready(self):

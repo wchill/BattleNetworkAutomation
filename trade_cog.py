@@ -4,13 +4,16 @@ import io
 import json
 import multiprocessing
 import os
+import pickle
 import threading
+import time
 from typing import Optional
 
 import discord
 from discord.ext import commands, tasks
 
 from auto_trader import DiscordContext, RoomCodeMessage
+from bn_automation.controller import Button, DPad
 from chip_list import ChipList
 from navicust_part_list import NaviCustPartList
 from trade_manager import (
@@ -18,6 +21,7 @@ from trade_manager import (
     ClearQueueCommand,
     DiscordMessageReplyRequest,
     ListQueueCommand,
+    LoadQueueCommand,
     PauseQueueCommand,
     RequestCommand,
     TradeManager,
@@ -29,6 +33,8 @@ with open(os.path.join(os.path.dirname(__file__), "config.json"), "r") as f:
 discord_config = config["discord"]
 
 CHANNEL_IDS = {int(channel_id) for channel_id in discord_config["trade_channel_ids"]}
+QUEUE_MESSAGE_ID = discord_config["queue_message_id"]
+QUEUE_MESSAGE_CHANNEL = int(discord_config["queue_message_channel"])
 
 
 def in_channel_check(ctx: commands.Context):
@@ -42,8 +48,11 @@ class TradeCog(commands.Cog, name="Trade"):
     def __init__(self, bot: commands.Bot, trade_manager: TradeManager):
         self.bot = bot
         self.trade_manager = trade_manager
+        self.queue_message_id = None
         self._message_req_thread = None
         self._image_req_thread = None
+
+        self._queue_message = None
 
     @tasks.loop(seconds=60)
     async def change_status(self):
@@ -61,9 +70,23 @@ class TradeCog(commands.Cog, name="Trade"):
     async def on_ready(self):
         print("Trade cog successfully loaded")
 
+        global QUEUE_MESSAGE_ID, config
+        channel = await self.bot.fetch_channel(QUEUE_MESSAGE_CHANNEL)
+        if QUEUE_MESSAGE_ID is None:
+            self._queue_message = await channel.send("This will be replaced with the queue.")
+            QUEUE_MESSAGE_ID = self._queue_message.id
+            config["discord"]["queue_message_id"] = QUEUE_MESSAGE_ID
+            with open(os.path.join(os.path.dirname(__file__), "config.json"), "w") as f:
+                json.dump(config, f)
+        else:
+            QUEUE_MESSAGE_ID = int(QUEUE_MESSAGE_ID)
+            self._queue_message = await channel.fetch_message(QUEUE_MESSAGE_ID)
+        self._queue_update_thread.start()
+
     async def cog_load(self) -> None:
         self._message_req_thread = threading.Thread(target=self.handle_message_requests, daemon=True)
         self._image_req_thread = threading.Thread(target=self.handle_image_message_requests, daemon=True)
+        self._queue_update_thread = threading.Thread(target=self.handle_queue_updates, daemon=True)
         self._message_req_thread.start()
         self._image_req_thread.start()
         self.trade_manager.start_processing()
@@ -96,6 +119,43 @@ class TradeCog(commands.Cog, name="Trade"):
                 await discord_message.reply(embed=embed, file=attach)
             else:
                 await discord_message.reply(embed=embed)
+
+    def handle_queue_updates(self):
+        last_update_time = 0
+        while True:
+            try:
+                cached_queue, current_userid = self.trade_manager.queue_update_queue.get()
+
+                if time.time() - last_update_time > 30:
+                    last_update_time = time.time()
+                    lines = []
+                    count = 0
+                    in_progress = None
+                    for _, request in cached_queue.items():
+                        if count >= 30:
+                            break
+                        if current_userid == request.user_id:
+                            in_progress = request
+                        else:
+                            count += 1
+                            lines.append(f"{count}. {request.user_name} ({request.user_id}) - {request.trade_item}")
+
+                    embed = discord.Embed(
+                        title=f"Current queue ({len(cached_queue)})",
+                        description="\n".join(lines) if lines else "No queued trades",
+                    )
+                    embed.add_field(
+                        name="In progress",
+                        value=f"{in_progress.user_name} ({in_progress.user_id}) - {in_progress.trade_item}"
+                        if in_progress
+                        else "No one",
+                    )
+                    embed.set_footer(text="The queue is refreshed every 30 seconds")
+                    asyncio.run_coroutine_threadsafe(self._queue_message.edit(content="", embed=embed), self.bot.loop)
+            except Exception:
+                import traceback
+
+                traceback.print_exc()
 
     def handle_message_requests(self):
         while True:
@@ -188,7 +248,29 @@ class TradeCog(commands.Cog, name="Trade"):
     @commands.command()
     @in_channel
     async def queue(self, ctx: commands.Context):
-        self.trade_manager.request_queue.put(ListQueueCommand(DiscordContext.create(ctx)))
+        if await self.bot.is_owner(ctx.author):
+            self.trade_manager.request_queue.put(ListQueueCommand(DiscordContext.create(ctx)))
+        else:
+            await ctx.message.add_reaction(MessageReaction.ERROR.value)
+            await ctx.message.reply("Please check <#1106460288124985384> for the current queue.")
+
+    @commands.command()
+    @in_channel
+    @commands.is_owner()
+    async def loadqueue(self, ctx: commands.Context):
+        self.trade_manager.request_queue.put(LoadQueueCommand(DiscordContext.create(ctx)))
+
+    @commands.command()
+    @in_channel
+    @commands.is_owner()
+    async def listsavedqueue(self, ctx: commands.Context):
+        with open("queue.pkl", "rb") as f:
+            q = pickle.load(f)
+        lines = ["```"]
+        for user_id, trade_command in q.items():
+            lines.append(f"{user_id}: {trade_command.trade_item}")
+        lines.append("```")
+        await ctx.reply("\n".join(lines))
 
     @commands.command()
     @in_channel
@@ -215,7 +297,7 @@ class TradeCog(commands.Cog, name="Trade"):
         count = 0
         for trade_item, qty in top_items:
             count += 1
-            if count >= 20:
+            if count > 20:
                 break
             lines.append(f"{count}. {trade_item} x{qty}")
 
@@ -284,11 +366,40 @@ class TradeCog(commands.Cog, name="Trade"):
             f"I've recorded trades for {self.trade_manager.bot_stats.get_total_trade_count()} things to {self.trade_manager.bot_stats.get_total_user_count()} users."
         )
 
+    @commands.command()
+    @in_channel
+    @commands.is_owner()
+    async def control(self, ctx: commands.Context, buttons: str):
+        input_list = buttons.split(",")
+        converted_inputs = []
+
+        all_buttons = {e.name.lower() for e in Button}
+        all_dpads = {e.name.lower() for e in DPad}
+        for x in input_list:
+            lower_x = x.lower()
+            if lower_x in all_dpads:
+                converted_inputs.append(DPad[x.lower().capitalize()])
+            elif lower_x in all_buttons:
+                if lower_x == "zl" or lower_x == "zr":
+                    x = x.upper()
+                else:
+                    x = x.lower().capitalize()
+                converted_inputs.append(Button[x])
+            else:
+                await ctx.message.reply(f"Unknown input: {x}")
+                return
+
+        self.trade_manager.send_inputs(converted_inputs)
+        await ctx.message.reply(f"Queued the inputs for execution")
+
 
 async def setup(bot: commands.Bot) -> None:
     request_queue = multiprocessing.Queue()
     image_send_queue = multiprocessing.JoinableQueue()
     message_queue = multiprocessing.SimpleQueue()
-    # utils.wait_port("localhost", 3000)
-    trade_manager = TradeManager(("raspberrypi.local", 3000), request_queue, image_send_queue, message_queue)
+    queue_update_queue = multiprocessing.SimpleQueue()
+    # utils.wait_port("127.0.0.1", 3000)
+    trade_manager = TradeManager(
+        ("127.0.0.1", 3000), request_queue, image_send_queue, message_queue, queue_update_queue
+    )
     await bot.add_cog(TradeCog(bot, trade_manager))
