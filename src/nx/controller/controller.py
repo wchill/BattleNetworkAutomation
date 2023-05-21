@@ -102,6 +102,7 @@ class Command:
         self.time = value
         return self
 
+    # noinspection PyTypeChecker
     @property
     def current_buttons(self) -> List[Button]:
         retval = []
@@ -124,6 +125,7 @@ class Command:
 
     def _translate_dpad(self):
         # ew
+        # noinspection PyTypeChecker
         return getattr(RawDPad, DPad(self._dpad).name) >> _RawDPad.SHIFT_BITS
 
     @staticmethod
@@ -170,7 +172,8 @@ class Controller:
     async def wait_for_inputs(self):
         await asyncio.sleep(self.last_input_finish_time - time.time())
 
-    def pprint_packet(self, bytestring):
+    @staticmethod
+    def pprint_packet(bytestring):
         button = repr(RawButton.from_bytes(bytestring[:2], byteorder="little"))
         dpad = repr(RawDPad.from_bytes(b"\x00\x00" + bytestring[2:3], byteorder="little"))
         lx = int.from_bytes(bytestring[3:4], byteorder="little")

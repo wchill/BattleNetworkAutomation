@@ -11,13 +11,13 @@ _observer: Optional[MonitorObserver] = None
 def print_capabilities(device):
     v = device.driver_version
     print("Input driver version is {}.{}.{}".format(v >> 16, (v >> 8) & 0xFF, v & 0xFF))
-    id = device.id
+    device.id
     print(
         "Input device ID: bus {:#x} vendor {:#x} product {:#x} version {:#x}".format(
-            id["bustype"],
-            id["vendor"],
-            id["product"],
-            id["version"],
+            device.id["bustype"],
+            device.id["vendor"],
+            device.id["product"],
+            device.id["version"],
         )
     )
     print("Input device name: {}".format(device.name))
@@ -185,5 +185,6 @@ def monitor_gamepads(cv) -> None:
 
         monitor = Monitor.from_netlink(context)
         monitor.filter_by(subsystem="input")
+        # noinspection PyTypeChecker
         _observer = MonitorObserver(monitor, callback=handle_device_event, name="monitor-observer")
         _observer.start()

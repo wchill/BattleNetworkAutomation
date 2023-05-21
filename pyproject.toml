@@ -6,7 +6,7 @@ name = "battle-network-automation"
 authors = [
     {name = "wchill"}
 ]
-description = "Automation for Battle Network Legacy Collection"
+description = "Nintendo Switch Automation for Battle Network Legacy Collection"
 requires-python = ">=3.8"
 version = "1.0"
 dependencies = [
@@ -21,8 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-install-usbgadget = "mmbn.scripts.install:install"
-start-server = "mmbn.scripts.start_server:start_server"
+start-server = "nx.scripts.start_server:start_server"
 
 [tool.setuptools]
 platforms = ["linux"]
