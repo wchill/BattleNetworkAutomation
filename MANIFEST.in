@@ -1,3 +1,0 @@
-include src/bn_automation/data/*
-include src/bn_automation/images/*
-include src/bn_automation/chip_images/*

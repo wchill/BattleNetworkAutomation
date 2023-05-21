@@ -134,3 +134,7 @@ dmypy.json
 config.json
 *.pkl
 temp/
+
+.DS_Store
+thumbs.db
+desktop.ini

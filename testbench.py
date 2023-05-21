@@ -1,12 +1,5 @@
-from bn_automation.controller import (
-    Button,
-    Command,
-    Controller,
-    DPad,
-    LeftStick,
-    RightStick,
-)
-from bn_automation.controller.sinks import SocketSink
+from nx.controller import Button, Command, Controller, DPad, LeftStick, RightStick
+from nx.controller.sinks import SocketSink
 
 WAIT_TIME = 0.1
 WAIT_TIME_2 = 0.2

@@ -10,21 +10,19 @@ description = "Automation for Battle Network Legacy Collection"
 requires-python = ">=3.8"
 version = "1.0"
 dependencies = [
-    "discord.py",
     "functionfs",
     "libevdev",
     "numpy",
     "opencv-contrib-python",
     "opencv-python",
     "psutil",
-    "py-cpuinfo",
     "pytesseract",
     "pyudev"
 ]
 
 [project.scripts]
-install-usbgadget = "bn_automation.scripts.install:install"
-start-server = "bn_automation.scripts.start_server:start_server"
+install-usbgadget = "mmbn.scripts.install:install"
+start-server = "mmbn.scripts.start_server:start_server"
 
 [tool.setuptools]
 platforms = ["linux"]
