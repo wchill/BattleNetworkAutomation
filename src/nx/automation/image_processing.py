@@ -18,6 +18,7 @@ CAPTURE_BGR2RGB = False
 def capture(convert=False):
     global CAPTURE, CAPTURE_BGR2RGB
     if CAPTURE is None:
+        device = None
         for device, init_func, should_convert in CAPTURE_DEVICES:
             print(f"Trying to open {device}")
             try:
@@ -32,6 +33,8 @@ def capture(convert=False):
                 continue
         if CAPTURE is None:
             raise RuntimeError("Unable to open video capture device")
+        else:
+            print(f"Using {device}")
     try:
         frame = CAPTURE.read()[1]
         if convert and CAPTURE_BGR2RGB:

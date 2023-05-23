@@ -6,6 +6,11 @@ class ExtendedIntFlagEnum(IntFlag):
     def All(cls):
         return [c.value for c in cls]
 
+    @classmethod
+    def from_str(cls, label):
+        mapping = {e.name.lower(): e for e in cls}
+        return mapping[label.lower()]
+
 
 class RawButton(ExtendedIntFlagEnum):
     Nothing = 0x0000
