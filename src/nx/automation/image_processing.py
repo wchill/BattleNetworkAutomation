@@ -1,49 +1,126 @@
+import platform
 import subprocess
 import sys
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 import cv2 as cv
 import numpy as np
 import pytesseract
+from PIL import Image
 
-CAPTURE = None
-CAPTURE_DEVICES = [
+from nx.automation.WindowsGraphicsCaptureMethod import WindowsGraphicsCaptureMethod
+
+LINUX_CAPTURE = None
+LINUX_CAPTURE_DEVICES = [
     ("/dev/video100", lambda: None, False),
     ("/dev/hdmi-capture", lambda: subprocess.run(["/usr/bin/v4l2-ctl", "--set-dv-bt-timings", "query"]), True),
     (0, lambda: None, False),
 ]
-CAPTURE_BGR2RGB = False
+LINUX_CAPTURE_BGR2RGB = False
 
 
-def capture(convert=False):
-    global CAPTURE, CAPTURE_BGR2RGB
-    if CAPTURE is None:
+def capture_linux(convert: bool = False, window_name: Optional[str] = None):
+    global LINUX_CAPTURE, LINUX_CAPTURE_BGR2RGB
+    if LINUX_CAPTURE is None:
         device = None
-        for device, init_func, should_convert in CAPTURE_DEVICES:
+        for device, init_func, should_convert in LINUX_CAPTURE_DEVICES:
             print(f"Trying to open {device}")
             try:
                 init_func()
-                CAPTURE = cv.VideoCapture(device)
-                if not CAPTURE.isOpened():
-                    CAPTURE = None
+                LINUX_CAPTURE = cv.VideoCapture(device)
+                if not LINUX_CAPTURE.isOpened():
+                    LINUX_CAPTURE = None
                     continue
-                CAPTURE_BGR2RGB = should_convert
+                LINUX_CAPTURE_BGR2RGB = should_convert
                 break
             except FileNotFoundError:
                 continue
-        if CAPTURE is None:
+        if LINUX_CAPTURE is None:
             raise RuntimeError("Unable to open video capture device")
         else:
             print(f"Using {device}")
     try:
-        frame = CAPTURE.read()[1]
-        if convert and CAPTURE_BGR2RGB:
+        frame = LINUX_CAPTURE.read()[1]
+        if convert and LINUX_CAPTURE_BGR2RGB:
             frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
         return frame
     except Exception:
-        CAPTURE = None
+        LINUX_CAPTURE = None
         # Try one time to reopen the capture device
-        return capture(convert)
+        return capture_linux(convert)
+
+
+WIN_HANDLES = None
+WIN_CAPTURE = None
+
+
+def capture_win(convert: bool = False, window_name: Optional[str] = None):
+    import win32gui
+
+    global WIN_CAPTURE
+    if WIN_CAPTURE is None:
+        assert window_name is not None
+        WIN_CAPTURE = WindowsGraphicsCaptureMethod(window_name)
+
+    img = None
+    while img is None or img.shape[0] == 0 or img.shape[1] == 0:
+        img, _ = WIN_CAPTURE.get_frame()
+        if img is None:
+            win32gui.ShowWindow(WIN_CAPTURE.hwnd, 9)
+
+    return img
+
+
+def capture_win_alt(convert: bool = False, window_name: Optional[str] = None):
+    # Adapted from https://stackoverflow.com/questions/19695214/screenshot-of-inactive-window-printwindow-win32gui
+    global WIN_HANDLES
+
+    from ctypes import windll
+
+    import win32gui
+    import win32ui
+
+    if WIN_HANDLES is None:
+        assert window_name is not None
+        print("Acquiring window handle")
+        windll.user32.SetProcessDPIAware()
+        hwnd = win32gui.FindWindow(None, "MegaMan_BattleNetwork_LegacyCollection_Vol2")
+
+        left, top, right, bottom = win32gui.GetClientRect(hwnd)
+        w = right - left
+        h = bottom - top
+        print(f"Client rect: {left}, {top}, {right}, {bottom}")
+
+        hwnd_dc = win32gui.GetWindowDC(hwnd)
+        mfc_dc = win32ui.CreateDCFromHandle(hwnd_dc)
+        save_dc = mfc_dc.CreateCompatibleDC()
+
+        bitmap = win32ui.CreateBitmap()
+        bitmap.CreateCompatibleBitmap(mfc_dc, w, h)
+
+        WIN_HANDLES = (hwnd, hwnd_dc, mfc_dc, save_dc, bitmap)
+
+    (hwnd, hwnd_dc, mfc_dc, save_dc, bitmap) = WIN_HANDLES
+    save_dc.SelectObject(bitmap)
+
+    # If Special K is running, this number is 3. If not, 1
+    result = windll.user32.PrintWindow(hwnd, save_dc.GetSafeHdc(), 3)
+
+    bmpinfo = bitmap.GetInfo()
+    bmpstr = bitmap.GetBitmapBits(True)
+
+    im = Image.frombuffer("RGB", (bmpinfo["bmWidth"], bmpinfo["bmHeight"]), bmpstr, "raw", "BGRX", 0, 1)
+
+    if result != 1:
+        win32gui.DeleteObject(bitmap.GetHandle())
+        save_dc.DeleteDC()
+        mfc_dc.DeleteDC()
+        win32gui.ReleaseDC(hwnd, hwnd_dc)
+        WIN_HANDLES = None
+        raise RuntimeError(f"Unable to acquire screenshot! Result: {result}")
+
+
+capture = capture_linux if platform.system() == "Linux" else capture_win
 
 
 def run_tesseract_digits(image, top_left, text_size, invert=True):

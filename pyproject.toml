@@ -10,21 +10,23 @@ description = "Nintendo Switch Automation for Battle Network Legacy Collection"
 requires-python = ">=3.8"
 version = "1.0"
 dependencies = [
-    "functionfs",
-    "libevdev",
+    'functionfs ; platform_system != "Windows"',
+    'libevdev ; platform_system != "Windows"',
     "numpy",
     "opencv-contrib-python",
     "opencv-python",
     "psutil",
     "pytesseract",
-    "pyudev"
+    'pyudev ; platform_system != "Windows"',
+    'pywin32 ; platform_system == "Windows"',
+    'winsdk ; platform_system == "Windows"'
 ]
 
 [project.scripts]
 start-server = "nx.scripts.start_server:start_server"
 
 [tool.setuptools]
-platforms = ["linux"]
+platforms = ["linux", "windows"]
 
 [tool.black]
 line-length = 120
