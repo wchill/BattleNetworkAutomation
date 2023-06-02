@@ -8,8 +8,6 @@ import numpy as np
 import pytesseract
 from PIL import Image
 
-from nx.automation.WindowsGraphicsCaptureMethod import WindowsGraphicsCaptureMethod
-
 LINUX_CAPTURE = None
 LINUX_CAPTURE_DEVICES = [
     ("/dev/video100", lambda: None, False),
@@ -60,6 +58,10 @@ def capture_win(convert: bool = False, window_name: Optional[str] = None):
     global WIN_CAPTURE
     if WIN_CAPTURE is None:
         assert window_name is not None
+        from nx.automation.WindowsGraphicsCaptureMethod import (
+            WindowsGraphicsCaptureMethod,
+        )
+
         WIN_CAPTURE = WindowsGraphicsCaptureMethod(window_name)
 
     img = None
