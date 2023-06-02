@@ -19,6 +19,7 @@ dependencies = [
     "pytesseract",
     'pyudev ; platform_system != "Windows"',
     'pywin32 ; platform_system == "Windows"',
+    'vdf ; platform_system == "Windows"',
     'winsdk ; platform_system == "Windows"'
 ]
 
