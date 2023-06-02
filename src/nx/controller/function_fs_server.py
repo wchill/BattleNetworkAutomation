@@ -3,6 +3,7 @@ import errno
 import getpass
 import inspect
 import logging
+import math
 import signal
 import socket
 import threading
@@ -296,8 +297,8 @@ class UsbHidDevice(functionfs.HIDFunction):
         # Specify how many more bytes are expected
         if request == ControllerRequest.UPDATE_REPORT:
             return request, 8
-        elif request == ControllerRequest.UPDATE_REPORT_N_TIMES:
-            return request, 10
+        elif request == ControllerRequest.UPDATE_REPORT_FOR_MSEC:
+            return request, 12
         else:
             return request, 0
 
@@ -413,7 +414,7 @@ class UsbHidDevice(functionfs.HIDFunction):
 
                         if (
                             request == ControllerRequest.UPDATE_REPORT
-                            or request == ControllerRequest.UPDATE_REPORT_N_TIMES
+                            or request == ControllerRequest.UPDATE_REPORT_FOR_MSEC
                         ):
                             self._joystick_lock.acquire()
                             if self.using_gamepad:
@@ -427,7 +428,7 @@ class UsbHidDevice(functionfs.HIDFunction):
                                 self.send_response(conn, ControllerResponse.HOST_ENABLED)
                             else:
                                 if len(msg) > 8:
-                                    repeat_times = int.from_bytes(msg[8:10], byteorder="little")
+                                    repeat_times = math.ceil(int.from_bytes(msg[8:12], byteorder="little") / 8)
                                 else:
                                     repeat_times = None
                                 self.add_report_to_queue(msg, repeat_times)
@@ -449,6 +450,22 @@ class UsbHidDevice(functionfs.HIDFunction):
         for our only IN endpoint.
         """
         return HIDInEndpoint if is_in else HIDOutEndpoint
+
+    def onBind(self):
+        print_func_name_and_args()
+
+    def onUnbind(self):
+        print_func_name_and_args()
+
+    def onSetup(self, request_type, request, value, index, length):
+        print_func_name_and_args()
+        super().onSetup(request_type, request, value, index, length)
+
+    def onSuspend(self):
+        print_func_name_and_args()
+
+    def onResume(self):
+        print_func_name_and_args()
 
     def onEnable(self):
         """

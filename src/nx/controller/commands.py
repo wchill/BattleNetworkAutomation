@@ -3,7 +3,7 @@ from enum import IntEnum
 
 class ControllerRequest(IntEnum):
     UPDATE_REPORT = 0x00
-    UPDATE_REPORT_N_TIMES = 0x01
+    UPDATE_REPORT_FOR_MSEC = 0x01
     STOP = 0xFF
 
     def serialize(self):

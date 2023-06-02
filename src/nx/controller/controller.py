@@ -189,8 +189,8 @@ class Controller:
 
         if command.time is not None and command.time > 0:
             self.output.write(
-                ControllerRequest.UPDATE_REPORT_N_TIMES,
-                bytes(command.to_packet()) + math.ceil(command.time / 8).to_bytes(length=2, byteorder="little"),
+                ControllerRequest.UPDATE_REPORT_FOR_MSEC,
+                bytes(command.to_packet()) + command.time.to_bytes(length=4, byteorder="little"),
             )
             if self.last_input_finish_time is None:
                 self.last_input_finish_time = time.time()

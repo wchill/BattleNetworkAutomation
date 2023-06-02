@@ -74,11 +74,32 @@ class Gamepad:
 
     @property
     def button_name_map(self) -> Dict[str, str]:
-        return {}
+        return {
+            "BTN_SOUTH": "B",
+            "BTN_NORTH": "Y",
+            "BTN_EAST": "A",
+            "BTN_WEST": "X",
+            "BTN_TL": "L",
+            "BTN_TR": "R",
+            "BTN_MODE": "Home",
+            "BTN_SELECT": "Minus",
+            "BTN_START": "Plus",
+            "BTN_THUMBL": "L3",
+            "BTN_THUMBR": "R3",
+        }
 
     @property
     def axis_name_map(self) -> Dict[str, str]:
-        return {}
+        return {
+            "ABS_Z": "ZL",
+            "ABS_RZ": "ZR",
+            "ABS_X": "LEFT_X",
+            "ABS_Y": "LEFT_Y",
+            "ABS_RX": "RIGHT_X",
+            "ABS_RY": "RIGHT_Y",
+            "ABS_HAT0X": "DPAD_X",
+            "ABS_HAT0Y": "DPAD_Y",
+        }
 
     def scale_axis(self, axis: str, value: int) -> float:
         axis_info = self.axis_info[axis]
