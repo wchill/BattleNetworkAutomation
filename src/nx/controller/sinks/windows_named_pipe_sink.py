@@ -1,8 +1,4 @@
-import asyncio
 import time
-
-import win32api
-import win32file
 
 from nx.controller.commands import ControllerRequest, ControllerResponse
 
@@ -48,6 +44,8 @@ class WindowsNamedPipeSink:
         return self.connect_to_pipe()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        import win32api
+
         if self.handle is not None:
             win32api.CloseHandle(self.handle)
             self.handle = None
@@ -58,6 +56,8 @@ class PipeWrapper:
         self.pipe_handle = pipe_handle
 
     def write(self, command: ControllerRequest, data: bytes):
+        import win32file
+
         success, bytes_written = win32file.WriteFile(self.pipe_handle, command.serialize() + data)
         while True:
             success, resp = win32file.ReadFile(self.pipe_handle, 1024)

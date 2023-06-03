@@ -1,3 +1,5 @@
+import functools
+import os
 from typing import Optional
 
 import vdf
@@ -7,6 +9,7 @@ STEAM_APPID_VOL1 = 1798010
 STEAM_APPID_VOL2 = 1798020
 
 
+@functools.cache
 def get_game_install_paths() -> tuple[Optional[str], Optional[str]]:
     with open(LIBRARYFOLDERS_VDF_PATH, "r") as f:
         library_folders = vdf.load(f)["libraryfolders"]
@@ -22,3 +25,13 @@ def get_game_install_paths() -> tuple[Optional[str], Optional[str]]:
             vol2_path = folder["path"] + r"\steamapps\common\MegaMan_BattleNetwork_LegacyCollection_Vol2\exe"
 
     return vol1_path, vol2_path
+
+
+def get_vol1_exe_path() -> str:
+    vol1_dir, _ = get_game_install_paths()
+    return os.path.join(vol1_dir, "MMBN_LC1.exe")
+
+
+def get_vol2_exe_path() -> str:
+    _, vol2_dir = get_game_install_paths()
+    return os.path.join(vol2_dir, "MMBN_LC2.exe")
