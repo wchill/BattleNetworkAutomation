@@ -159,7 +159,7 @@ class Command:
 class Controller:
     def __init__(self, output):
         self.output = output
-        self.last_input_finish_time = 0
+        self.last_input_finish_time = None
 
     @staticmethod
     # Precision wait
@@ -170,7 +170,8 @@ class Controller:
             t1 = time.perf_counter()
 
     async def wait_for_inputs(self):
-        await asyncio.sleep(self.last_input_finish_time - time.time())
+        t = self.last_input_finish_time - time.time()
+        await asyncio.sleep(t)
 
     @staticmethod
     def pprint_packet(bytestring):
@@ -194,7 +195,7 @@ class Controller:
             )
             if self.last_input_finish_time is None:
                 self.last_input_finish_time = time.time()
-            self.last_input_finish_time += command.time / 1000
+            self.last_input_finish_time = max(self.last_input_finish_time, time.time()) + (command.time / 1000)
         else:
             self.output.write(ControllerRequest.UPDATE_REPORT, bytes(command.to_packet()))
             self.last_input_finish_time = time.time()

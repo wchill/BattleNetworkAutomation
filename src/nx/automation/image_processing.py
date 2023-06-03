@@ -52,7 +52,8 @@ WIN_HANDLES = None
 WIN_CAPTURE = None
 
 
-def capture_win(convert: bool = False, window_name: Optional[str] = None):
+# TODO: Don't hardcode the window name
+def capture_win(convert: bool = False, window_name: Optional[str] = "MegaMan_BattleNetwork_LegacyCollection_Vol2"):
     import win32gui
 
     global WIN_CAPTURE
@@ -73,7 +74,7 @@ def capture_win(convert: bool = False, window_name: Optional[str] = None):
     return img
 
 
-def capture_win_alt(convert: bool = False, window_name: Optional[str] = None):
+def capture_win_alt(convert: bool = False, window_name: Optional[str] = "MegaMan_BattleNetwork_LegacyCollection_Vol2"):
     # Adapted from https://stackoverflow.com/questions/19695214/screenshot-of-inactive-window-printwindow-win32gui
     global WIN_HANDLES
 
@@ -121,8 +122,12 @@ def capture_win_alt(convert: bool = False, window_name: Optional[str] = None):
         WIN_HANDLES = None
         raise RuntimeError(f"Unable to acquire screenshot! Result: {result}")
 
+    open_cv_image = np.array(im)[:, :, ::-1].copy()
+    return open_cv_image
 
-capture = capture_linux if platform.system() == "Linux" else capture_win
+
+# TODO: Make Windows Graphics Capture work
+capture = capture_linux if platform.system() == "Linux" else capture_win_alt
 
 
 def run_tesseract_digits(image, top_left, text_size, invert=True):

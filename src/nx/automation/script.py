@@ -5,7 +5,8 @@ from typing import Any, Awaitable, Callable, Optional, Tuple
 from ..controller import Button, Command, Controller, DPad
 from . import image_processing
 
-DEFAULT_HOLD_TIME = 80
+# TODO: Evaluate whether we need 160 or can revert to 80
+DEFAULT_HOLD_TIME = 160
 
 
 class Script:
@@ -36,7 +37,7 @@ class Script:
         for _ in range(times):
             await func(*args, **kwargs)
 
-    async def up(self, hold_time: int = 200, wait_time: int = None) -> None:
+    async def up(self, hold_time: int = DEFAULT_HOLD_TIME, wait_time: int = None) -> None:
         await self._press_dpad(DPad.Up, hold_time, wait_time)
 
     async def down(self, hold_time: int = DEFAULT_HOLD_TIME, wait_time: int = None) -> None:
