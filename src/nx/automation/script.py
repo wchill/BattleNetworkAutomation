@@ -1,12 +1,18 @@
 import asyncio
 import time
-from typing import Any, Awaitable, Callable, Optional, Tuple
+from typing import Any, Awaitable, Callable, Coroutine, Optional, Tuple
 
 from ..controller import Button, Command, Controller, DPad
 from . import image_processing
+from .image_processing import Size, TopLeftCoords
 
 # TODO: Evaluate whether we need 160 or can revert to 80
 DEFAULT_HOLD_TIME = 160
+
+
+Matcher = Callable[[str], bool]
+MatchHandler = Callable[[], Coroutine[Any, Any, Tuple[int, Optional[str]]]]
+MatchArgs = Tuple[Matcher, MatchHandler, TopLeftCoords, Size, bool]
 
 
 class Script:
@@ -118,3 +124,25 @@ class Script:
                 return True
             await asyncio.sleep(0.1)
         return False
+
+    @staticmethod
+    async def match(*matchers: MatchArgs) -> Optional[Tuple[int, Optional[str]]]:
+        frame = image_processing.capture()
+        for matcher, run_func, top_left, size, invert in matchers:
+            ocr_text = image_processing.run_tesseract_line(frame, top_left, size, invert)
+            if matcher(ocr_text):
+                return await run_func()
+
+        return None
+
+    @staticmethod
+    async def wait_for_match(*matchers: MatchArgs, timeout: Optional[float]) -> Tuple[int, Optional[str]]:
+        start_time = time.time()
+        while timeout is None or start_time + timeout > time.time():
+            frame = image_processing.capture()
+            for matcher, run_func, top_left, size, invert in matchers:
+                ocr_text = image_processing.run_tesseract_line(frame, top_left, size, invert)
+                if matcher(ocr_text):
+                    return await run_func()
+            await asyncio.sleep(0.1)
+        raise TimeoutError("Did not match within timeout")

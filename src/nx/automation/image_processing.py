@@ -17,6 +17,10 @@ LINUX_CAPTURE_DEVICES = [
 LINUX_CAPTURE_BGR2RGB = False
 
 
+TopLeftCoords = Tuple[int, int]
+Size = Tuple[int, int]
+
+
 def capture_linux(convert: bool = False, window_name: Optional[str] = None):
     global LINUX_CAPTURE, LINUX_CAPTURE_BGR2RGB
     if LINUX_CAPTURE is None:
@@ -87,7 +91,7 @@ def capture_win_alt(convert: bool = False, window_name: Optional[str] = "MegaMan
         assert window_name is not None
         print("Acquiring window handle")
         windll.user32.SetProcessDPIAware()
-        hwnd = win32gui.FindWindow(None, "MegaMan_BattleNetwork_LegacyCollection_Vol2")
+        hwnd = win32gui.FindWindow(None, window_name)
 
         left, top, right, bottom = win32gui.GetClientRect(hwnd)
         w = right - left
