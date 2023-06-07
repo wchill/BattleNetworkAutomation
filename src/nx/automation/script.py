@@ -115,7 +115,7 @@ class Script:
         top_left: Tuple[int, int],
         size: Tuple[int, int],
         timeout: Optional[float],
-        invert=True,
+        invert: bool = True,
     ) -> bool:
         start_time = time.time()
         while timeout is None or start_time + timeout > time.time():

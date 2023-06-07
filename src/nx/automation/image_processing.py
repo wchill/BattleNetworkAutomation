@@ -21,7 +21,7 @@ TopLeftCoords = Tuple[int, int]
 Size = Tuple[int, int]
 
 
-def capture_linux(convert: bool = False, window_name: Optional[str] = None):
+def capture_linux(convert: bool = False):
     global LINUX_CAPTURE, LINUX_CAPTURE_BGR2RGB
     if LINUX_CAPTURE is None:
         device = None
@@ -54,20 +54,21 @@ def capture_linux(convert: bool = False, window_name: Optional[str] = None):
 
 WIN_HANDLES = None
 WIN_CAPTURE = None
+WIN_WINDOW_NAME: Optional[str] = None
 
 
 # TODO: Don't hardcode the window name
-def capture_win(convert: bool = False, window_name: Optional[str] = "MegaMan_BattleNetwork_LegacyCollection_Vol2"):
+def capture_win(convert: bool = False):
     import win32gui
 
     global WIN_CAPTURE
     if WIN_CAPTURE is None:
-        assert window_name is not None
+        assert WIN_WINDOW_NAME is not None
         from nx.automation.WindowsGraphicsCaptureMethod import (
             WindowsGraphicsCaptureMethod,
         )
 
-        WIN_CAPTURE = WindowsGraphicsCaptureMethod(window_name)
+        WIN_CAPTURE = WindowsGraphicsCaptureMethod(WIN_WINDOW_NAME)
 
     img = None
     while img is None or img.shape[0] == 0 or img.shape[1] == 0:
@@ -78,7 +79,7 @@ def capture_win(convert: bool = False, window_name: Optional[str] = "MegaMan_Bat
     return img
 
 
-def capture_win_alt(convert: bool = False, window_name: Optional[str] = "MegaMan_BattleNetwork_LegacyCollection_Vol2"):
+def capture_win_alt(convert: bool = False):
     # Adapted from https://stackoverflow.com/questions/19695214/screenshot-of-inactive-window-printwindow-win32gui
     global WIN_HANDLES
 
@@ -88,10 +89,10 @@ def capture_win_alt(convert: bool = False, window_name: Optional[str] = "MegaMan
     import win32ui
 
     if WIN_HANDLES is None:
-        assert window_name is not None
+        assert WIN_WINDOW_NAME is not None
         print("Acquiring window handle")
         windll.user32.SetProcessDPIAware()
-        hwnd = win32gui.FindWindow(None, window_name)
+        hwnd = win32gui.FindWindow(None, WIN_WINDOW_NAME)
 
         left, top, right, bottom = win32gui.GetClientRect(hwnd)
         w = right - left
