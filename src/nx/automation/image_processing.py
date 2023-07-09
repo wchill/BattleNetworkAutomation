@@ -8,23 +8,13 @@ import numpy as np
 import pytesseract
 from PIL import Image
 
-
-def get_pixel_format():
-    p = subprocess.run(["/usr/bin/v4l2-ctl", "-V"], capture_output=True)
-    return cv.COLOR_YUV420p2RGB if "UYVY" in p.stdout else cv.COLOR_BGR2RGB
-
-
 LINUX_CAPTURE = None
 LINUX_CAPTURE_DEVICES = [
-    ("/dev/video100", lambda: None, get_pixel_format),
-    (
-        "/dev/hdmi-capture",
-        lambda: subprocess.run(["/usr/bin/v4l2-ctl", "--set-dv-bt-timings", "query"]),
-        get_pixel_format,
-    ),
-    (0, lambda: None, None),
+    ("/dev/video100", lambda: None, False),
+    ("/dev/hdmi-capture", lambda: subprocess.run(["/usr/bin/v4l2-ctl", "--set-dv-bt-timings", "query"]), True),
+    (0, lambda: None, False),
 ]
-LINUX_CAPTURE_CONVERT_PIXELFORMAT = None
+LINUX_CAPTURE_BGR2RGB = False
 
 
 TopLeftCoords = Tuple[int, int]
@@ -32,10 +22,10 @@ Size = Tuple[int, int]
 
 
 def capture_linux(convert: bool = False):
-    global LINUX_CAPTURE, LINUX_CAPTURE_CONVERT_PIXELFORMAT
+    global LINUX_CAPTURE, LINUX_CAPTURE_BGR2RGB
     if LINUX_CAPTURE is None:
         device = None
-        for device, init_func, conversion_pixelformat in LINUX_CAPTURE_DEVICES:
+        for device, init_func, should_convert in LINUX_CAPTURE_DEVICES:
             print(f"Trying to open {device}")
             try:
                 init_func()
@@ -43,8 +33,7 @@ def capture_linux(convert: bool = False):
                 if not LINUX_CAPTURE.isOpened():
                     LINUX_CAPTURE = None
                     continue
-                subprocess.run(["/usr/bin/v4l2-ctl", "-V"], capture_output=True)
-                LINUX_CAPTURE_CONVERT_PIXELFORMAT = conversion_pixelformat
+                LINUX_CAPTURE_BGR2RGB = should_convert
                 break
             except FileNotFoundError:
                 continue
@@ -54,8 +43,8 @@ def capture_linux(convert: bool = False):
             print(f"Using {device}")
     try:
         frame = LINUX_CAPTURE.read()[1]
-        if convert and LINUX_CAPTURE_CONVERT_PIXELFORMAT:
-            frame = cv.cvtColor(frame, LINUX_CAPTURE_CONVERT_PIXELFORMAT)
+        if convert and LINUX_CAPTURE_BGR2RGB:
+            frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
         return frame
     except Exception:
         LINUX_CAPTURE = None
