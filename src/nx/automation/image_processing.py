@@ -120,12 +120,16 @@ def capture_win_alt(convert: bool = False):
     im = Image.frombuffer("RGB", (bmpinfo["bmWidth"], bmpinfo["bmHeight"]), bmpstr, "raw", "BGRX", 0, 1)
 
     if result != 1:
-        win32gui.DeleteObject(bitmap.GetHandle())
-        save_dc.DeleteDC()
-        mfc_dc.DeleteDC()
-        win32gui.ReleaseDC(hwnd, hwnd_dc)
-        WIN_HANDLES = None
-        raise RuntimeError(f"Unable to acquire screenshot! Result: {result}")
+        try:
+            win32gui.DeleteObject(bitmap.GetHandle())
+            save_dc.DeleteDC()
+            mfc_dc.DeleteDC()
+            win32gui.ReleaseDC(hwnd, hwnd_dc)
+        except Exception:
+            pass
+        finally:
+            WIN_HANDLES = None
+        return capture_win_alt(convert)
 
     open_cv_image = np.array(im)[:, :, ::-1].copy()
     return open_cv_image
