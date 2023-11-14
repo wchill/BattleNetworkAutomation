@@ -59,7 +59,7 @@ class WindowsNamedPipeSink:
             print(f"Starting process {self.process_name}")
             subprocess.Popen([self.process_name])
             while process_name not in existing_processes.keys():
-                time.sleep(1)
+                time.sleep(5)
                 existing_processes = {p.name(): p.pid for p in psutil.process_iter(attrs=["name", "pid"])}
             process_id = existing_processes[process_name]
             print(f"Started pid {process_id}")

@@ -55,7 +55,7 @@ def get_logged_in_user_steamid32() -> int:
     try:
         import winreg
 
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"Software\Valve\Steam\ActiveProcess") as key:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam\ActiveProcess") as key:
             val, reg_type = winreg.QueryValueEx(key, "ActiveUser")
             assert reg_type == winreg.REG_DWORD
             return val
