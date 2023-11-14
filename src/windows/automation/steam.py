@@ -35,3 +35,29 @@ def get_vol1_exe_path() -> str:
 def get_vol2_exe_path() -> str:
     _, vol2_dir = get_game_install_paths()
     return os.path.join(vol2_dir, "MMBN_LC2.exe")
+
+
+def get_userdata_path(steamid_32: int) -> str:
+    return rf"C:\Program Files (x86)\Steam\userdata\{steamid_32}"
+
+
+def get_vol1_save_directory(steamid_32: int) -> str:
+    base_path = get_userdata_path(steamid_32)
+    return rf"{base_path}\1798010\remote"
+
+
+def get_vol2_save_directory(steamid_32: int) -> str:
+    base_path = get_userdata_path(steamid_32)
+    return rf"{base_path}\1798020\remote"
+
+
+def get_logged_in_user_steamid32() -> int:
+    try:
+        import winreg
+
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"Software\Valve\Steam\ActiveProcess") as key:
+            val, reg_type = winreg.QueryValueEx(key, "ActiveUser")
+            assert reg_type == winreg.REG_DWORD
+            return val
+    except ImportError:
+        raise RuntimeError("This function can only be called on a Windows machine.")
