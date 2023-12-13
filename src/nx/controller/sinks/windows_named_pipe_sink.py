@@ -111,10 +111,11 @@ class WindowsNamedPipeSink:
                     print("Pipe read returned no data, retrying after 1 second")
                     win32api.CloseHandle(self.handle)
                     time.sleep(1)
-                    existing_processes = {p.name(): p.pid for p in psutil.process_iter(attrs=["name", "pid"])}
-                    process_id = existing_processes[process_name]
                 else:
                     raise RuntimeError(win32api.GetLastError()) from e
+
+            existing_processes = {p.name(): p.pid for p in psutil.process_iter(attrs=["name", "pid"])}
+            process_id = existing_processes[process_name]
 
     def __enter__(self):
         return self.connect_to_pipe()
